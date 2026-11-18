@@ -8,10 +8,10 @@ Independent, multi-model research and deliberation environment for the YJ64 ecos
 
 ## Documents
 
-- [Open-source technical audit](docs/RESEARCH_AUDIT.md)
-- [Architecture decision proposal](docs/ARCHITECTURE_DECISION.md)
-- [YJ64 Engineering Core integration](docs/YJ64_INTEGRATION.md)
-- [Implementation roadmap](docs/IMPLEMENTATION_ROADMAP.md)
+- [Open-source technical audit](https://github.com/concreteballs/YJ64-Browser-Council/blob/research/initial-technical-audit/docs/RESEARCH_AUDIT.md)
+- [Architecture decision proposal](https://github.com/concreteballs/YJ64-Browser-Council/blob/research/initial-technical-audit/docs/ARCHITECTURE_DECISION.md)
+- [YJ64 Engineering Core integration](https://github.com/concreteballs/YJ64-Browser-Council/blob/research/initial-technical-audit/docs/YJ64_INTEGRATION.md)
+- [Implementation roadmap](https://github.com/concreteballs/YJ64-Browser-Council/blob/research/initial-technical-audit/docs/IMPLEMENTATION_ROADMAP.md)
 
 ## Non-negotiable boundaries
 
