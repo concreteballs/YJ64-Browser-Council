@@ -138,3 +138,18 @@ Reuse libraries and narrowly scoped patterns, not an entire product. Keep the AP
 - https://github.com/mastra-ai/mastra
 - https://github.com/temporalio/temporal
 - https://supabase.com/docs/guides/functions/limits
+
+
+## 9. Additional source and test inspection
+
+The audit went beyond README descriptions and inspected selected implementation files and tests:
+
+- **Multi-AI Chat Desktop:** `src-tauri/src/adapters.rs`, `src-tauri/src/webviews.rs`, `src/workflow/sendAndWait.ts`, `src/workflow/waitForResponse.ts`, `src/workflow/graph/executor.ts`, `src-tauri/src/session_checkpoint.rs`, and provider adapter JSON. Adapters are versioned data records with URL match rules, input/send/response selectors, login/logout/thinking detectors and timing. A bridge event keyed by provider/turn resolves the response waiter; provider reloads and timeouts reject it. The native host owns provider WebViews. **Important limitation found in source:** `runWorkflow` currently gates on one global `activeWorkflowRun`, and the checkpoint module writes one fixed `session-checkpoint.json` in the local app data directory. Thus the project is a valuable adapter/reliability reference, but it does not prove support for several independently durable Council runs in a hosted multi-tenant service. The CI and unit tests exercise workflow/adapter contracts; real provider UI behavior still needs live-account validation.
+
+- **Yes-Brainer:** `use-council-session.ts`, `run-consensus-phase.ts`, `run-trial-phase.ts`, `storage/db.ts`, `storage/keys.ts`, and Playwright integration tests were inspected. The orchestrator fans out one stream per active seat and persists turn events in Dexie/IndexedDB. The consensus phase records progress after mediator rounds and re-answer fan-outs, then replays persisted progress on resume. A per-turn Web Locks guard prevents duplicate page execution where supported. The integration tests explicitly assert both convergence and round-cap termination without fabricated agreement. This is a strong implementation reference for phase separation, replay and test design. Its canonical data and API keys remain browser-local; it is not a cloud multi-tenant service.
+
+- **Synode:** `crates/council-core/src/chat.rs`, provider implementations, `models/session.rs` and provider docs were inspected. Provider calls share an SSE parser and usage event model; provider-native web search is injected only for providers/models that support it. Session types distinguish Council and DirectChat. This is useful provider/streaming code, but its Rust/Tauri local desktop persistence and provider-API-only architecture do not provide hosted browser-profile automation.
+
+- **LibreChat:** the `@librechat/agents` package README and repository package layout were inspected. It uses graph orchestration, streaming event handlers, provider adapters, tool execution, subagent handoffs, session JSONL records, and optional checkpoints/fork/clone operations. This confirms that its agent package can be studied independently from the full web product, subject to package dependency and license review.
+
+These source findings reinforce the recommendation: take deliberation/replay ideas from Yes-Brainer, browser adapter patterns from Multi-AI Chat Desktop, provider/streaming patterns from Synode and LibreChat, but implement durable tenant-scoped run state and browser isolation specifically for Browser Council.
