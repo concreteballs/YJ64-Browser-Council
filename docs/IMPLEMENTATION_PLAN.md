@@ -4,7 +4,7 @@
 **Working branch:** `research/initial-technical-audit`  
 **Purpose:** build Browser Council as an independent, cloud-first product, using verified existing YJ64 capabilities without duplicating them or changing neighboring repositories.  
 **Execution model:** each run completes a small batch of related steps (normally 2–4), runs focused checks, records evidence and updates this plan before the next batch.  
-**Status:** Batch A is complete. Batch B has a Draft 2020-12 schema, automated schema/fixture tests and a read-only external v1 compatibility snapshot. GitHub Actions execution must be checked before Batch B is accepted. Product implementation has not started.
+**Status:** Batch A is complete. Batch B schema and compatibility baseline are committed; GitHub Actions validated the Draft 2020-12 schema and all 8 contract tests successfully. Full external OpenAPI conformance remains a Phase H gate. Product implementation has not started.
 
 ---
 
@@ -88,7 +88,7 @@
 
 **Execution batch A — completed (steps A1.1–A1.4):** branch baseline and existing notices verified; source-reuse and dependency policy recorded; API-first MVP boundary frozen; project-license decision explicitly left for owner approval. Evidence: [PRODUCT_SCOPE_AND_LICENSE_POLICY.md](PRODUCT_SCOPE_AND_LICENSE_POLICY.md).  
 **Execution batch B (steps A2.1–A3.5) — validation implementation added:** resource identities, tenant ownership, status/outcome semantics and internal API/event schema are recorded in [API_AND_EVENT_CONTRACTS.md](API_AND_EVENT_CONTRACTS.md) and [browser-council-v1.schema.json](../schemas/browser-council-v1.schema.json). Added Draft 2020-12 validation, representative positive/negative tests, and a read-only snapshot of the external v1 request/status/result constraints. Exact full OpenAPI conformance remains a Phase H gate; the adapter gaps around claim-type conversion and evidence resolution are explicitly documented.  
-**Acceptance:** schema and tests pass in GitHub Actions; IDs and ownership are unambiguous; no implementation duplicates existing YJ64 router/queue/Gateway; external v1 mapping gaps remain explicit and are closed by Phase H conformance tests. Current automated workflow result: pending verification.
+**Acceptance:** schema and tests pass in GitHub Actions; IDs and ownership are unambiguous; no implementation duplicates existing YJ64 router/queue/Gateway; external v1 mapping gaps remain explicit and are closed by Phase H conformance tests. Current automated workflow result: passed on commit `3079a9774952fa461d6e7c664d9937817080baac` (8 tests passed; GitHub Actions job `json-schema` completed successfully).
 
 ---
 
