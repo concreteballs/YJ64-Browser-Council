@@ -4,7 +4,7 @@ Independent, multi-model research and deliberation environment for the YJ64 ecos
 
 ## Project status
 
-**Phase 2 — cloud-first foundation.** Batches A and B are complete. The FastAPI process skeleton, health endpoints and API container smoke test now pass in GitHub Actions. React/PWA and persistence are still pending.
+**Phase 2 — cloud-first foundation.** Batches A and B are complete. The FastAPI service and responsive React/TypeScript PWA shell are in place. CI now builds both containers and validates Compose; database, authentication and real provider execution remain pending.
 
 ## Documents
 
@@ -16,6 +16,7 @@ Independent, multi-model research and deliberation environment for the YJ64 ecos
 - [Product scope and licensing / reuse policy](docs/PRODUCT_SCOPE_AND_LICENSE_POLICY.md)
 - [Internal API and event contracts](docs/API_AND_EVENT_CONTRACTS.md)
 - [Contract validation workflow](.github/workflows/contract-validation.yml)
+- [Web client foundation and runtime topology](docs/WEB_CLIENT_FOUNDATION.md)
 
 ## Non-negotiable boundaries
 
