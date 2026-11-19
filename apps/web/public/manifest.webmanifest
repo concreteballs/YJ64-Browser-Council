@@ -1,0 +1,10 @@
+{
+  "name": "YJ64 Browser Council",
+  "short_name": "Browser Council",
+  "description": "Independent multi-model research and deliberation.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#10131b",
+  "theme_color": "#10131b",
+  "icons": []
+}
