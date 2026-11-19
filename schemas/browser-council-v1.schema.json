@@ -345,7 +345,49 @@
           ],
           "maxLength": 2000
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "completed"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "outcome": {
+                "$ref": "#/$defs/analytical_outcome"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "not": {
+                  "const": "completed"
+                }
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "outcome": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
     },
     "provider_connection": {
       "type": "object",
