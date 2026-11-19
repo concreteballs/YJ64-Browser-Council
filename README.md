@@ -11,7 +11,7 @@ Independent, multi-model research and deliberation environment for the YJ64 ecos
 - [Open-source technical audit](docs/RESEARCH_AUDIT.md)
 - [Architecture decision proposal](docs/ARCHITECTURE_DECISION.md)
 - [YJ64 Engineering Core integration](docs/YJ64_INTEGRATION.md)
-- [Implementation roadmap](docs/IMPLEMENTATION_ROADMAP.md)\n- [Product scope and licensing / reuse policy](docs/PRODUCT_SCOPE_AND_LICENSE_POLICY.md)
+- [Implementation roadmap](docs/IMPLEMENTATION_ROADMAP.md)\n- [Product scope and licensing / reuse policy](docs/PRODUCT_SCOPE_AND_LICENSE_POLICY.md)\n- [Internal API and event contracts](docs/API_AND_EVENT_CONTRACTS.md)
 
 ## Non-negotiable boundaries
 
