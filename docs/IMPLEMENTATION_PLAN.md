@@ -338,8 +338,14 @@ A feature or phase is complete only when:
 
 ## 11. Current position and next action
 
-**Completed:** Phase 1 research and architecture; Batch A; Batch B schema and compatibility tests (8 passed in GitHub Actions).  
-**Open owner decision:** select the project's source license and commercial distribution terms; no license has been assigned.  
-**Not started:** application implementation.  
-**Next action:** finish Batch B validation — run a JSON Schema 2020-12 validator, add valid/invalid contract fixtures, and compare external v1 request/result fixtures against the unchanged Engineering Core schema and application OpenAPI.
+**Completed**
+- Phase A / Batch A: repository baseline, licensing/reuse policy and MVP boundary.
+- Batch B: internal API/event schema, Draft 2020-12 validation and external v1 compatibility snapshot. Eight contract tests passed in GitHub Actions.
+- Initial Batch C foundation: FastAPI service, liveness/readiness endpoints, Dockerfile, two API health tests and API container smoke test. The CI run on commit `61196e4c4d9ee6b3ae1382ed10943ed7a42da9cb` passed.
+- Web client foundation: responsive React/TypeScript shell, Council/individual-chat navigation, local-only draft composer, API liveness indicator, PWA manifest/service worker, Nginx reverse proxy, web container and Compose topology.
 
+**Current batch C status:** web build and Compose validation have been added to GitHub Actions. Await the new CI result before treating the web client/container as validated.
+
+**Known limitations:** no authentication, tenant persistence, database, durable worker, provider credentials/adapters, real model responses, streaming, file uploads or Browser Agent. The composer is explicitly a local preview. API readiness remains closed (503) until dependencies are real.
+
+**Next action:** verify the new CI run. Fix any build/runtime errors before proceeding to database migrations, tenant isolation and authentication design. Keep provider integration and persistence behind explicit server-side contracts.
