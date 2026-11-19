@@ -118,7 +118,7 @@
 3. Add migration/rollback strategy and test fixtures.
 4. Add durable event writes and idempotency constraints.
 
-**Execution batch C (B1.1–B2.5):** skeleton, pinned dependencies, health/readiness, CI and container smoke test.  
+**Execution batch C (B1.1–B2.5) — in progress:** created the initial FastAPI service boundary, liveness/readiness endpoints, pinned API dependencies, Dockerfile and API health tests. CI now runs schema tests, API tests, Python compilation and a container smoke test; the expanded workflow result is pending.  
 **Execution batch D (B3.1–B3.4):** initial schema, tenant isolation, migrations and durable event/idempotency tests.  
 **Acceptance:** clean CI; repeatable container startup; schema migrations pass; cross-workspace access tests fail safely; no secrets in repository.
 
@@ -338,7 +338,7 @@ A feature or phase is complete only when:
 
 ## 11. Current position and next action
 
-**Completed:** Phase 1 research and architecture; Execution Batch A (repository baseline, reuse policy and MVP boundary).  
+**Completed:** Phase 1 research and architecture; Batch A; Batch B schema and compatibility tests (8 passed in GitHub Actions).  
 **Open owner decision:** select the project's source license and commercial distribution terms; no license has been assigned.  
 **Not started:** application implementation.  
 **Next action:** finish Batch B validation — run a JSON Schema 2020-12 validator, add valid/invalid contract fixtures, and compare external v1 request/result fixtures against the unchanged Engineering Core schema and application OpenAPI.
