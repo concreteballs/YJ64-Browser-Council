@@ -1,0 +1,30 @@
+name: Contract validation
+
+on:
+  push:
+    branches:
+      - research/initial-technical-audit
+  pull_request:
+    branches:
+      - research/initial-technical-audit
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  json-schema:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+      - name: Install contract validator
+        run: python -m pip install -r requirements-dev.txt
+      - name: Validate JSON Schema and contract examples
+        run: python -m unittest discover -s tests/contracts -v
