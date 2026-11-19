@@ -139,3 +139,54 @@ The adapter returns a result only when completed; blocked/failed/cancelled are n
 - Validate the internal schema with a JSON Schema 2020-12 validator in CI before implementation is accepted.
 - Validate external request/result examples against the exact Engineering Core schema and application OpenAPI without modifying either source repository.
 - Owner approval is still required for project source license and commercial distribution terms.
+
+
+## 10. External v1 compatibility verification baseline
+
+A read-only inspection of `docs/openapi/council-api-v1.yaml` in
+`concreteballs/yj64-clean-bial2modFun5` (branch `main`) confirmed the
+published application-side OpenAPI 3.1 contract. Browser Council records a
+small compatibility snapshot at
+`tests/fixtures/yj64-council-api-v1-contract.json`; it is a test fixture,
+not a replacement for the source OpenAPI document. The neighboring repository
+was not modified.
+
+The exact external request requires `protocol_version`, `agent_id`,
+`correlation_id`, `idempotency_key`, `mode`, `task`, `limits` and
+`voting`. The external limits are narrower than the internal draft:
+`max_rounds` 1–10, `timeout_seconds` 30–86400 and
+`max_output_tokens` 256–100000. The adapter must reject out-of-range
+requests with a documented client error; it must not silently clamp values.
+
+The compatibility adapter must explicitly translate:
+- `task.title/prompt/context/evidence_refs` into a preconfigured internal
+  Council profile and run. External context and prompt remain untrusted input.
+- `mode` and `voting.enabled/weighted` into the selected Council profile.
+- `minimum_critique_rounds=1` and `allow_early_stop` into bounded run policy.
+- Internal `queued` to external `accepted`; all other execution states retain
+  the exact external enum. Internal `blocked` is not a completed result.
+- Internal claim types to the smaller external claim enum only through an
+  explicit documented mapping. In particular, `observation`,
+  `source_fact` and `model_assertion` must not be silently mislabeled.
+- Internal evidence references to external evidence objects only after the
+  referenced evidence records have been resolved. An ID alone is not enough
+  to fabricate the required external `reference`, `description` and
+  `evidence_type` fields.
+
+The external completed result requires `evidence`, while the internal result
+currently carries `evidence_refs`; this is a known adapter gap. The adapter
+must either resolve complete evidence records or fail result validation
+rather than emit fabricated evidence. The compatibility fixture and tests
+make these differences visible. Full request/result conformance against the
+authoritative OpenAPI document remains a gate for Phase H and must be run
+before live YJ64 integration.
+
+## 11. Contract validation status
+
+- JSON Schema Draft 2020-12 validation is automated by
+  `.github/workflows/contract-validation.yml`.
+- Unit tests cover event envelopes, execution/outcome separation, API versus
+  browser-session connection requirements, run limits, and the external v1
+  compatibility snapshot.
+- The GitHub Actions result is the execution evidence; a committed workflow
+  definition alone is not a passing test.
