@@ -4,7 +4,7 @@ Independent, multi-model research and deliberation environment for the YJ64 ecos
 
 ## Project status
 
-**Phase 1 — research and contract validation.** Batch A is complete. Batch B includes the internal API/event schema, automated JSON Schema Draft 2020-12 checks and a read-only YJ64 v1 compatibility snapshot. Product implementation has not started.
+**Phase 2 — cloud-first foundation.** Batches A and B are complete. The FastAPI process skeleton, health endpoints and API container smoke test now pass in GitHub Actions. React/PWA and persistence are still pending.
 
 ## Documents
 
