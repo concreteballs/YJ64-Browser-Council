@@ -1,0 +1,138 @@
+{
+  "contract": "yj64.council-api.v1",
+  "source": {
+    "repository": "concreteballs/yj64-clean-bial2modFun5",
+    "path": "docs/openapi/council-api-v1.yaml",
+    "ref": "main",
+    "read_only_snapshot": true
+  },
+  "request": {
+    "required": [
+      "protocol_version",
+      "agent_id",
+      "correlation_id",
+      "idempotency_key",
+      "mode",
+      "task",
+      "limits",
+      "voting"
+    ],
+    "protocol_version": "yj64.council-api.v1",
+    "mode": [
+      "consensus",
+      "critique"
+    ],
+    "task_required": [
+      "title",
+      "prompt",
+      "context",
+      "evidence_refs"
+    ],
+    "limits": {
+      "max_rounds": {
+        "minimum": 1,
+        "maximum": 10
+      },
+      "timeout_seconds": {
+        "minimum": 30,
+        "maximum": 86400
+      },
+      "max_output_tokens": {
+        "minimum": 256,
+        "maximum": 100000
+      },
+      "minimum_critique_rounds": {
+        "const": 1
+      },
+      "allow_early_stop": {
+        "type": "boolean"
+      }
+    },
+    "voting_required": [
+      "enabled",
+      "weighted"
+    ]
+  },
+  "accepted": {
+    "required": [
+      "protocol_version",
+      "request_id",
+      "session_id",
+      "status"
+    ],
+    "status": [
+      "accepted",
+      "running"
+    ]
+  },
+  "status": {
+    "required": [
+      "protocol_version",
+      "request_id",
+      "session_id",
+      "status"
+    ],
+    "status": [
+      "accepted",
+      "running",
+      "completed",
+      "blocked",
+      "failed",
+      "cancelled"
+    ]
+  },
+  "result": {
+    "required": [
+      "protocol_version",
+      "request_id",
+      "session_id",
+      "status",
+      "outcome",
+      "summary",
+      "claims",
+      "participant_positions",
+      "dissent",
+      "evidence",
+      "unresolved_questions"
+    ],
+    "status": "completed",
+    "outcome": [
+      "consensus",
+      "qualified_consensus",
+      "unresolved_disagreement",
+      "insufficient_evidence"
+    ],
+    "claim_epistemic_type": [
+      "fact",
+      "inference",
+      "hypothesis",
+      "test_result"
+    ],
+    "evidence_required": [
+      "evidence_id",
+      "reference",
+      "description",
+      "evidence_type"
+    ],
+    "evidence_type": [
+      "source",
+      "artifact",
+      "test",
+      "simulation",
+      "measurement"
+    ]
+  },
+  "cancel": {
+    "required": [
+      "protocol_version",
+      "request_id",
+      "status"
+    ],
+    "status": [
+      "completed",
+      "blocked",
+      "failed",
+      "cancelled"
+    ]
+  }
+}
