@@ -4,7 +4,7 @@
 **Working branch:** `research/initial-technical-audit`  
 **Purpose:** build Browser Council as an independent, cloud-first product, using verified existing YJ64 capabilities without duplicating them or changing neighboring repositories.  
 **Execution model:** each run completes a small batch of related steps (normally 2–4), runs focused checks, records evidence and updates this plan before the next batch.  
-**Status:** Phase 1 research and initial architecture are documented. Product implementation has not started.
+**Status:** Phase 1 research and architecture are documented. Execution Batch A is complete; Batch B (resource and API/event contracts) is next. Product implementation has not started.
 
 ---
 
@@ -65,9 +65,11 @@
 ### A1. Repository and licensing decisions
 
 1. Reconfirm repository branch, current files, CI and existing license notices.
-2. Choose Browser Council's project license and commercial distribution policy.
+2. Record the project-license decision or explicitly leave it for owner approval.
 3. Define third-party dependency notice and source-reuse policy.
 4. Record which audited projects are references only and which components, if any, are approved for reuse.
+
+**Execution evidence:** [Product scope and licensing / reuse policy](PRODUCT_SCOPE_AND_LICENSE_POLICY.md). Repository baseline and absence of a root license/dependency manifest were verified. MVP boundary and reuse restrictions are recorded. The project license remains an owner decision; no license file was added.
 
 ### A2. Product scope and resource identities
 
@@ -84,7 +86,7 @@
 4. Define Council run/result schema, including claims, assumptions, evidence references, dissent and limitations.
 5. Map the external `yj64.council-api.v1` request/result schema without silently changing it.
 
-**Execution batch A — first run (steps A1.1–A1.4):** verify branch baseline and licenses; decide project license/reuse policy; freeze MVP boundary; record open owner decisions.  
+**Execution batch A — completed (steps A1.1–A1.4):** branch baseline and existing notices verified; source-reuse and dependency policy recorded; API-first MVP boundary frozen; project-license decision explicitly left for owner approval. Evidence: [PRODUCT_SCOPE_AND_LICENSE_POLICY.md](PRODUCT_SCOPE_AND_LICENSE_POLICY.md).  
 **Execution batch B (steps A2.1–A3.5):** define resource identities, state model, internal API/event schemas and v1 compatibility mapping.  
 **Acceptance:** schemas validate; IDs and ownership are unambiguous; no implementation duplicates existing YJ64 router/queue/Gateway; owner decisions are recorded.
 
@@ -336,7 +338,8 @@ A feature or phase is complete only when:
 
 ## 11. Current position and next action
 
-**Completed:** Phase 1 research and initial architecture documentation.  
-**Not started:** product implementation.  
-**Next action:** execute Batch A — verify repository baseline and third-party licensing constraints, decide the Browser Council license/reuse policy, and freeze the MVP boundary before defining the API schemas.
+**Completed:** Phase 1 research and architecture; Execution Batch A (repository baseline, reuse policy and MVP boundary).  
+**Open owner decision:** select the project's source license and commercial distribution terms; no license has been assigned.  
+**Not started:** application implementation.  
+**Next action:** execute Batch B — define resource identities, tenant ownership, state semantics, API/event envelopes and v1 compatibility mapping.
 
