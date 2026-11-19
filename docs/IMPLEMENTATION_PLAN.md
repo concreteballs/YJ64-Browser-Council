@@ -4,7 +4,7 @@
 **Working branch:** `research/initial-technical-audit`  
 **Purpose:** build Browser Council as an independent, cloud-first product, using verified existing YJ64 capabilities without duplicating them or changing neighboring repositories.  
 **Execution model:** each run completes a small batch of related steps (normally 2–4), runs focused checks, records evidence and updates this plan before the next batch.  
-**Status:** Phase 1 research and architecture are documented. Execution Batch A is complete; Batch B (resource and API/event contracts) is next. Product implementation has not started.
+**Status:** Phase 1 research and architecture are documented. Batch A is complete. Batch B contract drafts are committed; formal JSON Schema validation and compatibility tests remain before Batch B acceptance. Product implementation has not started.
 
 ---
 
@@ -87,7 +87,7 @@
 5. Map the external `yj64.council-api.v1` request/result schema without silently changing it.
 
 **Execution batch A — completed (steps A1.1–A1.4):** branch baseline and existing notices verified; source-reuse and dependency policy recorded; API-first MVP boundary frozen; project-license decision explicitly left for owner approval. Evidence: [PRODUCT_SCOPE_AND_LICENSE_POLICY.md](PRODUCT_SCOPE_AND_LICENSE_POLICY.md).  
-**Execution batch B (steps A2.1–A3.5):** define resource identities, state model, internal API/event schemas and v1 compatibility mapping.  
+**Execution batch B (steps A2.1–A3.5) — in progress:** resource identities, tenant ownership, status/outcome semantics, internal API/event schema and v1 compatibility mapping are drafted in [API_AND_EVENT_CONTRACTS.md](API_AND_EVENT_CONTRACTS.md) and [browser-council-v1.schema.json](../schemas/browser-council-v1.schema.json). JSON syntax/read-back checks passed. Formal JSON Schema validation, representative payload tests, and exact v1 contract conformance tests remain open.  
 **Acceptance:** schemas validate; IDs and ownership are unambiguous; no implementation duplicates existing YJ64 router/queue/Gateway; owner decisions are recorded.
 
 ---
@@ -341,5 +341,5 @@ A feature or phase is complete only when:
 **Completed:** Phase 1 research and architecture; Execution Batch A (repository baseline, reuse policy and MVP boundary).  
 **Open owner decision:** select the project's source license and commercial distribution terms; no license has been assigned.  
 **Not started:** application implementation.  
-**Next action:** execute Batch B — define resource identities, tenant ownership, state semantics, API/event envelopes and v1 compatibility mapping.
+**Next action:** finish Batch B validation — run a JSON Schema 2020-12 validator, add valid/invalid contract fixtures, and compare external v1 request/result fixtures against the unchanged Engineering Core schema and application OpenAPI.
 
