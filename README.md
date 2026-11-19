@@ -4,7 +4,7 @@ Independent, multi-model research and deliberation environment for the YJ64 ecos
 
 ## Project status
 
-**Phase 1 — research and contract definition.** Source audit and architecture are documented. Batch A has frozen the API-first MVP boundary and third-party reuse policy; API/event contracts are next. Application implementation has not started.
+**Phase 1 — research and contract validation.** Batch A is complete. Batch B includes the internal API/event schema, automated Draft 2020-12 checks and a read-only YJ64 v1 compatibility snapshot. Product implementation has not started.
 
 ## Documents
 
@@ -17,7 +17,7 @@ Independent, multi-model research and deliberation environment for the YJ64 ecos
 
 - This repository is the only repository in which Browser Council implementation work is authorized.
 - Other YJ64 repositories may be inspected read-only for compatibility; they must not be modified without separate approval.
-- Do not begin product implementation until the audit and architecture decisions are reviewed.
+- Do not begin product implementation until the contract-validation workflow passes and the remaining owner decisions are recorded.
 - API integrations are the default. Browser automation is an optional, explicitly authorized adapter.
 - Never bypass authentication, CAPTCHA, paywalls, rate limits, or provider security controls.
 - Keep provider credentials and browser session data out of source control, logs, task payloads, and public artifacts.
