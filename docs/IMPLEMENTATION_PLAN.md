@@ -4,7 +4,7 @@
 **Working branch:** `research/initial-technical-audit`  
 **Purpose:** build Browser Council as an independent, cloud-first product, using verified existing YJ64 capabilities without duplicating them or changing neighboring repositories.  
 **Execution model:** each run completes a small batch of related steps (normally 2–4), runs focused checks, records evidence and updates this plan before the next batch.  
-**Status:** Batch A is complete. Batch B schema and compatibility baseline are committed; GitHub Actions validated the Draft 2020-12 schema and all 8 contract tests successfully. Full external OpenAPI conformance remains a Phase H gate. Product implementation has not started.
+**Status:** Batch A is complete. Batch B schema and compatibility baseline are committed; GitHub Actions validated the Draft 2020-12 schema and all 8 contract tests successfully. Full external OpenAPI conformance remains a Phase H gate. Initial API foundation is now in progress.
 
 ---
 
@@ -118,7 +118,7 @@
 3. Add migration/rollback strategy and test fixtures.
 4. Add durable event writes and idempotency constraints.
 
-**Execution batch C (B1.1–B2.5) — in progress:** created the initial FastAPI service boundary, liveness/readiness endpoints, pinned API dependencies, Dockerfile and API health tests. CI now runs schema tests, API tests, Python compilation and a container smoke test; the expanded workflow result is pending.  
+**Execution batch C (B1.1–B2.5) — in progress:** created the initial FastAPI service boundary, liveness/readiness endpoints, pinned API dependencies, Dockerfile and API health tests. CI now runs schema tests, API tests, Python compilation and a container smoke test. Verified on commit `61196e4c4d9ee6b3ae1382ed10943ed7a42da9cb`: all test/build/smoke steps passed.  
 **Execution batch D (B3.1–B3.4):** initial schema, tenant isolation, migrations and durable event/idempotency tests.  
 **Acceptance:** clean CI; repeatable container startup; schema migrations pass; cross-workspace access tests fail safely; no secrets in repository.
 
