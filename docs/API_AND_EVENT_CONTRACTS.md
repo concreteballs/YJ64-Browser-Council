@@ -117,7 +117,18 @@ Mapping rules:
 3. External `idempotency_key` is preserved and bound to the canonical external payload hash.
 4. External `task.title`, `task.prompt`, `task.context`, `task.evidence_refs`, `mode`, `limits` and `voting` map into a preconfigured Council profile and one internal run. Caller-supplied text is untrusted data, never privileged instructions.
 5. External `request_id` and `session_id` map to stable adapter records; they are not aliases for internal `run_id` or `conversation_id`.
-6. Internal execution states map to the exact external status enum. The adapter returns a result only when completed; blocked/failed/cancelled are not fabricated as completed results.
+6. Internal execution states map to the exact external status enum:
+
+| Internal execution status | External v1 status |
+|---|---|
+| `queued` | `accepted` |
+| `running` | `running` |
+| `completed` | `completed` |
+| `blocked` | `blocked` |
+| `failed` | `failed` |
+| `cancelled` | `cancelled` |
+
+The adapter returns a result only when completed; blocked/failed/cancelled are not fabricated as completed results. A completed internal run must have a non-null analytical outcome; every non-completed run has a null outcome.
 7. Internal outcomes map only to the four external outcome values. Additional internal detail is preserved in supported result fields, not by adding unrecognized v1 fields.
 8. Authentication, route paths, required headers, request/result shapes and status codes remain governed by the external OpenAPI/schema documents. No v1 extension is introduced here.
 
