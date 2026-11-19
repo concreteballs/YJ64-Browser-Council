@@ -4,14 +4,14 @@ Independent, multi-model research and deliberation environment for the YJ64 ecos
 
 ## Project status
 
-**Phase 1 — technical reconnaissance.** The first source audit and architecture recommendation are being recorded before application code is written. The repository was created empty; the initial audit is based on source repositories, documentation, and the read-only YJ64 integration review.
+**Phase 1 — research and contract definition.** Source audit and architecture are documented. Batch A has frozen the API-first MVP boundary and third-party reuse policy; API/event contracts are next. Application implementation has not started.
 
 ## Documents
 
 - [Open-source technical audit](docs/RESEARCH_AUDIT.md)
 - [Architecture decision proposal](docs/ARCHITECTURE_DECISION.md)
 - [YJ64 Engineering Core integration](docs/YJ64_INTEGRATION.md)
-- [Implementation roadmap](docs/IMPLEMENTATION_ROADMAP.md)
+- [Implementation roadmap](docs/IMPLEMENTATION_ROADMAP.md)\n- [Product scope and licensing / reuse policy](docs/PRODUCT_SCOPE_AND_LICENSE_POLICY.md)
 
 ## Non-negotiable boundaries
 
