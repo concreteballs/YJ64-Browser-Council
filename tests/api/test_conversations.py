@@ -22,6 +22,7 @@ class FakeConnection:
         self.executed = []
         self.idempotency = None
         self.last_sequence = 0
+        self.event_sequence = 0
         self.now = datetime.now(timezone.utc)
 
     async def fetch(self, query, *args):
@@ -54,6 +55,9 @@ class FakeConnection:
         if "UPDATE conversation_counters" in query:
             self.last_sequence += 1
             return {"last_sequence": self.last_sequence}
+        if "UPDATE workspace_event_counters" in query:
+            self.event_sequence += 1
+            return {"last_sequence": self.event_sequence}
         if "INSERT INTO messages" in query:
             return {
                 "id": UUID("dddddddd-dddd-4ddd-8ddd-dddddddddddd"),
