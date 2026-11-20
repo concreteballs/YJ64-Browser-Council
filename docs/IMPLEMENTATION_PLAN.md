@@ -340,13 +340,15 @@ A feature or phase is complete only when:
 
 **Completed**
 - Phase A / Batch A: repository baseline, licensing/reuse policy and MVP boundary.
-- Batch B: internal API/event schema, Draft 2020-12 validation and external v1 compatibility snapshot. Eight contract tests pass.
-- API foundation: FastAPI liveness/readiness endpoints, asyncpg pool lifecycle, transaction-local tenant principal context and database context tests.
-- Web foundation: responsive React/TypeScript shell, Council/individual-chat modes, local-only draft composer, API liveness indicator, PWA manifest/icons/service worker, Nginx reverse proxy and Compose topology.
-- PostgreSQL foundation: initial workspace/conversation/message/provider/Council/run/event/idempotency schema, workspace-scoped foreign keys and RLS.
-- Tenant isolation smoke test: a non-owner runtime role successfully creates its own workspace and is denied access/write into another principal's workspace.
-- Full CI passed on `8b8f88f4f3bea0b1f7fb8dd9386863be746f2dd8`: contract/API tests, Python compilation, PostgreSQL migration + RLS smoke test, PWA build, Compose validation, API and web container builds, API container smoke test.
+- Batch B: internal API/event schema, Draft 2020-12 validation and external v1 compatibility snapshot. Contract tests pass.
+- Responsive React/TypeScript PWA shell: Council and individual-chat modes, honest local-only draft preview, API status, install icons, offline navigation fallback, Nginx reverse proxy and Compose topology.
+- PostgreSQL core schema: workspaces/memberships, provider connection metadata, conversations/messages, councils/participants/runs, durable event counters/events and idempotency records.
+- Tenant isolation: workspace-scoped composite foreign keys, RLS policies, and a PostgreSQL CI smoke test proving a non-owner runtime role cannot read or write another principal's workspace.
+- API database layer: asyncpg pool lifecycle, readiness connectivity check, transaction-local principal context and safe pooled connection release.
+- Authentication boundary: provider-neutral OIDC/JWKS bearer verification, RS256-only validation, required issuer/audience/expiry/subject, fail-closed configuration, issuer-scoped deterministic internal principal IDs.
+- First protected API routes: list and create workspaces. Creation atomically creates the owner membership and event counter.
+- Full CI passed on `f800f5626d2d6949e768cbe8a1a6ee1eb4f8ca78`: contract/API/auth/workspace tests, Python compilation, PostgreSQL migration + RLS test, PWA build, Compose validation, API/web container builds and API container smoke test.
 
-**Known limitations:** API database pool is optional and not yet configured in Compose; there are no workspace HTTP routes, authentication provider/verifier, production migration runner, durable worker, provider credentials/adapters, real model responses, streaming, uploads, research execution or Browser Agent. The composer remains a local preview. API readiness remains 503 until the worker exists.
+**Known limitations:** OIDC provider is not configured; no credentials or live sign-in. Database URL and production migration orchestration are not configured in Compose. No workspace membership management, conversation/message endpoints, durable worker, provider adapters, actual model responses, streaming, attachments, evidence search or Browser Agent. The composer remains a local preview. API readiness remains 503 until the worker is implemented.
 
-**Next action:** implement a provider-neutral OIDC/JWKS authentication boundary, map verified issuer+subject to an internal principal UUID, and connect protected workspace routes through the transaction-scoped database context. Keep identity-provider configuration explicit and fail closed when absent.
+**Next action:** extend the same verified-principal + tenant-transaction pattern to conversation and message persistence, including idempotency and ordered message history. Only after that connect provider adapters and real streaming; do not display fabricated model answers.
