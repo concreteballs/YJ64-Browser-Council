@@ -19,7 +19,7 @@ class HealthEndpointTests(unittest.TestCase):
         self.assertEqual(response.status_code, 503)
         payload = response.json()
         self.assertEqual(payload["status"], "not_ready")
-        self.assertEqual(payload["dependencies"]["database"], "not_implemented")
+        self.assertEqual(payload["dependencies"]["database"], "not_configured_or_unavailable")
         self.assertEqual(payload["dependencies"]["worker"], "not_implemented")
 
 
