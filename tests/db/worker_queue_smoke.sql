@@ -178,3 +178,50 @@ BEGIN
   END IF;
 END $$;
 RESET ROLE;
+
+-- If a worker crashes after cancellation is requested, lease recovery finalizes
+-- cancellation instead of leaving a permanently leased row or retrying the work.
+DO $$
+DECLARE ws uuid := current_setting('test.worker_workspace_id')::uuid;
+DECLARE job uuid := gen_random_uuid();
+BEGIN
+  INSERT INTO worker_jobs(id, workspace_id, job_type, max_attempts)
+    VALUES (job, ws, 'test.cancel_crash', 2);
+  PERFORM set_config('test.cancel_crash_job_id', job::text, false);
+END $$;
+
+SET ROLE browser_council_worker;
+DO $$
+DECLARE job_id uuid := current_setting('test.cancel_crash_job_id')::uuid;
+DECLARE worker_id uuid := gen_random_uuid();
+DECLARE claimed record;
+BEGIN
+  SELECT * INTO claimed FROM app.worker_claim_job(worker_id, 60);
+  IF claimed.id IS DISTINCT FROM job_id THEN
+    RAISE EXCEPTION 'cancel-crash job was not claimed';
+  END IF;
+END $$;
+RESET ROLE;
+
+UPDATE worker_jobs
+SET cancel_requested_at = now(), lease_expires_at = now() - interval '1 second'
+WHERE id = current_setting('test.cancel_crash_job_id')::uuid;
+
+SET ROLE browser_council_worker;
+DO $$
+DECLARE claimed record;
+BEGIN
+  SELECT * INTO claimed FROM app.worker_claim_job(gen_random_uuid(), 60);
+  IF FOUND THEN
+    RAISE EXCEPTION 'expired cancelled job was incorrectly re-claimed';
+  END IF;
+END $$;
+RESET ROLE;
+
+DO $$
+BEGIN
+  IF (SELECT status FROM worker_jobs
+      WHERE id = current_setting('test.cancel_crash_job_id')::uuid) <> 'cancelled' THEN
+    RAISE EXCEPTION 'expired cancellation request was not finalized';
+  END IF;
+END $$;
