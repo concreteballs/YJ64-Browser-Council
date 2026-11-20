@@ -166,6 +166,27 @@ async def create_conversation(
             workspace_id,
             row["id"],
         )
+        event_counter = await connection.fetchrow(
+            """
+            UPDATE workspace_event_counters
+            SET last_sequence = last_sequence + 1
+            WHERE workspace_id = $1
+            RETURNING last_sequence
+            """,
+            workspace_id,
+        )
+        if event_counter is None:
+            raise HTTPException(status_code=409, detail="Workspace event counter is missing")
+        await connection.execute(
+            """
+            INSERT INTO workspace_events (workspace_id, sequence, event_type, resource, payload)
+            VALUES ($1, $2, 'conversation.created', $3::jsonb, $4::jsonb)
+            """,
+            workspace_id,
+            event_counter["last_sequence"],
+            json.dumps({"workspace_id": str(workspace_id), "conversation_id": str(row["id"])}),
+            json.dumps({"title": row["title"]}),
+        )
     return ConversationRead(**dict(row))
 
 
@@ -285,6 +306,35 @@ async def create_message(
             counter["last_sequence"],
         )
         result = MessageRead(**dict(row))
+        event_counter = await connection.fetchrow(
+            """
+            UPDATE workspace_event_counters
+            SET last_sequence = last_sequence + 1
+            WHERE workspace_id = $1
+            RETURNING last_sequence
+            """,
+            workspace_id,
+        )
+        if event_counter is None:
+            raise HTTPException(status_code=409, detail="Workspace event counter is missing")
+        await connection.execute(
+            """
+            INSERT INTO workspace_events (workspace_id, sequence, event_type, resource, payload)
+            VALUES ($1, $2, 'message.created', $3::jsonb, $4::jsonb)
+            """,
+            workspace_id,
+            event_counter["last_sequence"],
+            json.dumps({
+                "workspace_id": str(workspace_id),
+                "conversation_id": str(conversation_id),
+                "message_id": str(result.id),
+            }),
+            json.dumps({
+                "client_message_id": result.client_message_id,
+                "role": result.role,
+                "sequence": result.sequence,
+            }),
+        )
         await connection.execute(
             """
             UPDATE idempotency_records
