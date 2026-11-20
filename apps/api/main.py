@@ -12,6 +12,7 @@ from apps.api.routes.conversations import (
     job_router,
 )
 from apps.api.routes.events import router as events_router
+from apps.api.routes.councils import council_router, run_router, workspace_council_router
 from apps.api.routes.workspaces import router as workspaces_router
 
 
@@ -74,3 +75,6 @@ app.include_router(conversation_router)
 app.include_router(message_router)
 app.include_router(job_router)
 app.include_router(events_router)
+app.include_router(workspace_council_router)
+app.include_router(council_router)
+app.include_router(run_router)
