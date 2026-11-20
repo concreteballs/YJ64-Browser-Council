@@ -223,20 +223,33 @@ async def create_message(
             raise HTTPException(status_code=404, detail="Conversation not found")
         workspace_id = conversation["workspace_id"]
 
-        existing = await connection.fetchrow(
+        inserted = await connection.fetchrow(
             """
-            SELECT request_hash, response_body
-            FROM idempotency_records
-            WHERE workspace_id = $1 AND principal_id = $2
-              AND operation = 'message.create' AND idempotency_key = $3
-            FOR UPDATE
+            INSERT INTO idempotency_records
+              (workspace_id, principal_id, operation, idempotency_key, request_hash)
+            VALUES ($1, $2, 'message.create', $3, $4)
+            ON CONFLICT (workspace_id, principal_id, operation, idempotency_key) DO NOTHING
+            RETURNING id
             """,
             workspace_id,
             principal.user_id,
             payload.idempotency_key,
+            request_hash,
         )
-        if existing is not None:
-            if existing["request_hash"].strip() != request_hash:
+        if inserted is None:
+            existing = await connection.fetchrow(
+                """
+                SELECT request_hash, response_body
+                FROM idempotency_records
+                WHERE workspace_id = $1 AND principal_id = $2
+                  AND operation = 'message.create' AND idempotency_key = $3
+                FOR UPDATE
+                """,
+                workspace_id,
+                principal.user_id,
+                payload.idempotency_key,
+            )
+            if existing is None or existing["request_hash"].strip() != request_hash:
                 raise HTTPException(status_code=409, detail="Idempotency key reused with a different request")
             response_body = existing["response_body"]
             if response_body is None:
@@ -245,17 +258,6 @@ async def create_message(
                 response_body = json.loads(response_body)
             return MessageRead(**response_body)
 
-        await connection.execute(
-            """
-            INSERT INTO idempotency_records
-              (workspace_id, principal_id, operation, idempotency_key, request_hash)
-            VALUES ($1, $2, 'message.create', $3, $4)
-            """,
-            workspace_id,
-            principal.user_id,
-            payload.idempotency_key,
-            request_hash,
-        )
         counter = await connection.fetchrow(
             """
             UPDATE conversation_counters
