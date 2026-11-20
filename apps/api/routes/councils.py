@@ -371,7 +371,6 @@ async def cancel_council_run(
             """
             SELECT id, workspace_id, status
             FROM council_runs WHERE id = $1
-            FOR UPDATE
             """,
             run_id,
         )
@@ -388,6 +387,17 @@ async def cancel_council_run(
         )
         if job is None:
             raise HTTPException(status_code=409, detail="Council run has no worker job")
+        # Lock in the same job-then-run order used by worker claim/completion.
+        row = await connection.fetchrow(
+            """
+            SELECT id, workspace_id, status
+            FROM council_runs WHERE id = $1
+            FOR UPDATE
+            """,
+            run_id,
+        )
+        if row is None:
+            raise HTTPException(status_code=404, detail="Council run not found")
 
         run_status = row["status"]
         cancellation_requested = False
