@@ -1,3 +1,4 @@
+import json
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
@@ -79,8 +80,6 @@ class WorkerQueue:
         """Atomically persist a Council result/outcome and complete its leased job."""
         if self.database.pool is None:
             raise RuntimeError("Database pool is not connected")
-        import json
-
         async with self.database.pool.acquire() as connection:
             return await connection.fetchval(
                 "SELECT app.worker_complete_council_run($1, $2, $3, $4::jsonb)",
