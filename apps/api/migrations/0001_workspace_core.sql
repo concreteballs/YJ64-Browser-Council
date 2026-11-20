@@ -68,12 +68,7 @@ STABLE
 SECURITY DEFINER
 SET search_path = pg_catalog, public
 SET row_security = off
-AS $
-  SELECT EXISTS (
-    SELECT 1 FROM public.workspaces w
-    WHERE w.id = target_workspace AND w.created_by = app.current_user_id()
-  )
-$;
+AS 'SELECT EXISTS (SELECT 1 FROM public.workspaces w WHERE w.id = target_workspace AND w.created_by = app.current_user_id())';
 
 CREATE TABLE IF NOT EXISTS provider_connections (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
