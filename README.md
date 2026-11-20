@@ -4,7 +4,7 @@ Independent, multi-model research and deliberation environment for the YJ64 ecos
 
 ## Project status
 
-**Phase 2 — cloud-first foundation.** Batches A and B are complete. The FastAPI service and responsive React/TypeScript PWA shell are in place. CI now builds both containers and validates Compose; the initial PostgreSQL tenant schema and RLS checks are now in CI; API database wiring, authentication and real provider execution remain pending.
+**Phase 2 — cloud-first foundation.** Batches A and B are complete. The FastAPI service and responsive React/TypeScript PWA shell are in place. CI now builds both containers and validates Compose; the PostgreSQL tenant schema and RLS regression test pass in CI; the API now has an asyncpg pool lifecycle and transaction-local tenant context. Authentication, workspace routes and real provider execution remain pending.
 
 ## Documents
 
@@ -18,6 +18,7 @@ Independent, multi-model research and deliberation environment for the YJ64 ecos
 - [Contract validation workflow](.github/workflows/contract-validation.yml)
 - [Web client foundation and runtime topology](docs/WEB_CLIENT_FOUNDATION.md)
 - [Data model and tenant security](docs/DATA_MODEL_AND_TENANT_SECURITY.md)
+- [API database lifecycle](docs/API_DATABASE_LIFECYCLE.md)
 
 ## Non-negotiable boundaries
 
