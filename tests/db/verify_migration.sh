@@ -25,16 +25,24 @@ if [[ "$ready" != "1" ]]; then
 fi
 
 docker exec "$container" psql -v ON_ERROR_STOP=1 -U postgres -d postgres \
-  -c "CREATE ROLE browser_council_runtime NOLOGIN"
+  -c "CREATE ROLE browser_council_runtime NOLOGIN; CREATE ROLE browser_council_worker NOLOGIN"
 docker exec -i "$container" psql -v ON_ERROR_STOP=1 -U postgres -d postgres \
   < apps/api/migrations/0001_workspace_core.sql
+docker exec -i "$container" psql -v ON_ERROR_STOP=1 -U postgres -d postgres \
+  < apps/api/migrations/0002_durable_worker_queue.sql
 docker exec -i "$container" psql -v ON_ERROR_STOP=1 -U postgres -d postgres <<'SQL'
 GRANT USAGE ON SCHEMA public, app TO browser_council_runtime;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO browser_council_runtime;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO browser_council_runtime;
 GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA app TO browser_council_runtime;
+GRANT USAGE ON SCHEMA app TO browser_council_worker;
+GRANT EXECUTE ON FUNCTION app.worker_claim_job(uuid, integer) TO browser_council_worker;
+GRANT EXECUTE ON FUNCTION app.worker_heartbeat_job(uuid, uuid, integer) TO browser_council_worker;
+GRANT EXECUTE ON FUNCTION app.worker_finish_job(uuid, uuid, boolean, varchar, integer) TO browser_council_worker;
 SQL
 
 docker exec -i "$container" psql -v ON_ERROR_STOP=1 -U postgres -d postgres \
   < tests/db/rls_smoke.sql
-echo "PostgreSQL migration and tenant RLS smoke test passed."
+docker exec -i "$container" psql -v ON_ERROR_STOP=1 -U postgres -d postgres \
+  < tests/db/worker_queue_smoke.sql
+echo "PostgreSQL migrations, tenant RLS and worker queue smoke tests passed."
