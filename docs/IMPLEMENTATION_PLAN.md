@@ -340,14 +340,13 @@ A feature or phase is complete only when:
 
 **Completed**
 - Phase A / Batch A: repository baseline, licensing/reuse policy and MVP boundary.
-- Batch B: internal API/event schema, Draft 2020-12 validation and external v1 compatibility snapshot. Eight contract tests passed.
-- API foundation: FastAPI liveness/readiness endpoints, API container and health tests.
-- Web foundation: responsive React/TypeScript shell, Council/individual-chat modes, local-only draft composer, API liveness indicator, PWA manifest/service worker, Nginx reverse proxy and Compose topology. The complete CI run on `cc01c49c9c16e94fee5fdf6739fdec7bd90e8988` passed, including web build, Compose validation and both container builds.
-- Persistence design: initial PostgreSQL core migration with workspace membership, conversations/messages, provider metadata, councils/participants/runs, durable event sequence and idempotency records.
-- Tenant security baseline: RLS policies and composite workspace-scoped foreign keys. Added a CI smoke test that creates a non-owner runtime role and checks cross-tenant read/write denial.
+- Batch B: internal API/event schema, Draft 2020-12 validation and external v1 compatibility snapshot. Eight contract tests pass.
+- API foundation: FastAPI liveness/readiness endpoints, asyncpg pool lifecycle, transaction-local tenant principal context and database context tests.
+- Web foundation: responsive React/TypeScript shell, Council/individual-chat modes, local-only draft composer, API liveness indicator, PWA manifest/icons/service worker, Nginx reverse proxy and Compose topology.
+- PostgreSQL foundation: initial workspace/conversation/message/provider/Council/run/event/idempotency schema, workspace-scoped foreign keys and RLS.
+- Tenant isolation smoke test: a non-owner runtime role successfully creates its own workspace and is denied access/write into another principal's workspace.
+- Full CI passed on `8b8f88f4f3bea0b1f7fb8dd9386863be746f2dd8`: contract/API tests, Python compilation, PostgreSQL migration + RLS smoke test, PWA build, Compose validation, API and web container builds, API container smoke test.
 
-**Current status:** PostgreSQL migration/RLS regression test has just been added to CI. Its result is pending; do not treat the migration as validated until that job passes.
+**Known limitations:** API database pool is optional and not yet configured in Compose; there are no workspace HTTP routes, authentication provider/verifier, production migration runner, durable worker, provider credentials/adapters, real model responses, streaming, uploads, research execution or Browser Agent. The composer remains a local preview. API readiness remains 503 until the worker exists.
 
-**Known limitations:** API is not yet connected to PostgreSQL. No authentication, tenant persistence runtime, durable worker, provider credentials/adapters, real model responses, streaming, uploads, research execution or Browser Agent. The composer remains a local preview. API readiness remains 503.
-
-**Next action:** validate the migration against PostgreSQL and fix any RLS/schema errors. Then implement database connection lifecycle and authentication-derived transaction context before exposing workspace routes. Never accept tenant identity from client-supplied IDs or unverified headers.
+**Next action:** implement a provider-neutral OIDC/JWKS authentication boundary, map verified issuer+subject to an internal principal UUID, and connect protected workspace routes through the transaction-scoped database context. Keep identity-provider configuration explicit and fail closed when absent.
