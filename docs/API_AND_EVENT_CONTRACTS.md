@@ -66,6 +66,8 @@ Rules:
 | POST | `/api/v1/councils/{council_id}/runs` | Start Council run (idempotent) |
 | GET | `/api/v1/runs/{run_id}` | Read run status/result |
 | GET | `/api/v1/runs/{run_id}/events` | Replay/stream events (SSE) |
+| GET | `/api/v1/workspaces/{workspace_id}/events` | Replay durable workspace events after a sequence cursor |
+| GET | `/api/v1/workspaces/{workspace_id}/events/stream` | Stream/replay workspace events over SSE using `Last-Event-ID` |
 | POST | `/api/v1/runs/{run_id}/cancel` | Request cancellation |
 | GET | `/api/v1/health/live` | Process liveness |
 | GET | `/api/v1/health/ready` | Dependency readiness |
