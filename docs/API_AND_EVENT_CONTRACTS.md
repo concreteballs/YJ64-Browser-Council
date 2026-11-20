@@ -61,6 +61,7 @@ Rules:
 | GET | `/api/v1/conversations/{conversation_id}/messages` | Read persisted history |
 | POST | `/api/v1/conversations/{conversation_id}/messages` | Submit message (idempotent) |
 | POST | `/api/v1/conversations/{conversation_id}/turns/{turn_id}/cancel` | Cancel active generation |
+| POST | `/api/v1/jobs/{job_id}/cancel` | Cancel queued work or request cancellation of a leased job |
 | POST | `/api/v1/workspaces/{workspace_id}/councils` | Create Council profile |
 | POST | `/api/v1/councils/{council_id}/runs` | Start Council run (idempotent) |
 | GET | `/api/v1/runs/{run_id}` | Read run status/result |
