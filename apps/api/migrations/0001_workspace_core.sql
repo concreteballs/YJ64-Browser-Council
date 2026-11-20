@@ -61,6 +61,20 @@ AS $$
   )
 $$;
 
+CREATE OR REPLACE FUNCTION app.is_workspace_creator(target_workspace uuid)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = pg_catalog, public
+SET row_security = off
+AS $
+  SELECT EXISTS (
+    SELECT 1 FROM public.workspaces w
+    WHERE w.id = target_workspace AND w.created_by = app.current_user_id()
+  )
+$;
+
 CREATE TABLE IF NOT EXISTS provider_connections (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   workspace_id uuid NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
@@ -201,7 +215,7 @@ BEGIN
     'workspace_event_counters','workspace_events','idempotency_records'
   ] LOOP
     EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', t);
-    EXECUTE format('ALTER TABLE public.%I FORCE ROW LEVEL SECURITY', t);
+    
   END LOOP;
 END $$;
 
@@ -217,9 +231,7 @@ CREATE POLICY membership_read ON workspace_members
   FOR SELECT USING (user_id = app.current_user_id() OR app.is_workspace_member(workspace_id));
 CREATE POLICY membership_create ON workspace_members
   FOR INSERT WITH CHECK (
-    (user_id = app.current_user_id() AND EXISTS (
-      SELECT 1 FROM workspaces w WHERE w.id = workspace_id AND w.created_by = app.current_user_id()
-    ))
+    (user_id = app.current_user_id() AND app.is_workspace_creator(workspace_id))
     OR app.has_workspace_role(workspace_id, ARRAY['owner','admin'])
   );
 CREATE POLICY membership_update ON workspace_members
