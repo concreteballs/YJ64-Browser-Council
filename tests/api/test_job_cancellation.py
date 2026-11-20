@@ -83,6 +83,19 @@ class JobCancellationTests(unittest.TestCase):
         self.assertTrue(response.json()["cancellation_requested"])
         self.assertIsNotNone(self.database.connection.cancel_requested)
 
+
+    def test_repeated_leased_cancellation_does_not_duplicate_event(self):
+        self.database.connection.status = "leased"
+        first = self.client.post(f"/api/v1/jobs/{JOB_ID}/cancel")
+        second = self.client.post(f"/api/v1/jobs/{JOB_ID}/cancel")
+        self.assertEqual(first.status_code, 200)
+        self.assertEqual(second.status_code, 200)
+        event_inserts = sum(
+            "INSERT INTO workspace_events" in query
+            for query, _ in self.database.connection.executed
+        )
+        self.assertEqual(event_inserts, 1)
+
     def test_terminal_job_is_not_changed(self):
         self.database.connection.status = "completed"
         response = self.client.post(f"/api/v1/jobs/{JOB_ID}/cancel")
