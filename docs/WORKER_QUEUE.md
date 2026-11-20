@@ -26,7 +26,7 @@ Tenant users see queue rows only through workspace RLS. The database migration d
 ## Current limitations
 
 - This is the durable queue persistence/client layer, not a running polling worker or deployed worker service.
-- Council run claim transitions, terminal failure/cancellation synchronization and outcome-gated completion are now implemented in migration `0003_council_run_lifecycle.sql`. The API can enqueue and inspect runs. A continuously running worker and user-facing run-cancel route remain open.
+- Council run claim transitions, terminal failure/cancellation synchronization and outcome-gated completion are now implemented in migration `0003_council_run_lifecycle.sql`. The API can enqueue, inspect and cancel runs. A continuously running worker remains open.
 - No model/provider calls are made by this queue layer.
 - The PostgreSQL smoke test verifies least privilege, claim, heartbeat, retry, lease expiry, cancellation acknowledgement, Council run start and outcome-gated completion. The API tests cover the enqueue contract.
 - Readiness remains `503` until a real worker service is deployed and verified.
