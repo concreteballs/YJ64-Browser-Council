@@ -44,6 +44,11 @@ class FakeConnection:
             }
         if "SELECT workspace_id FROM conversations" in query:
             return {"workspace_id": WORKSPACE_ID}
+        if "INSERT INTO idempotency_records" in query:
+            if self.idempotency is not None:
+                return None
+            self.idempotency = {"request_hash": args[3], "response_body": None}
+            return {"id": UUID("eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee")}
         if "SELECT request_hash, response_body" in query:
             return self.idempotency
         if "UPDATE conversation_counters" in query:
@@ -60,9 +65,7 @@ class FakeConnection:
 
     async def execute(self, query, *args):
         self.executed.append((query, args))
-        if "INSERT INTO idempotency_records" in query:
-            self.idempotency = {"request_hash": args[3], "response_body": None}
-        elif "UPDATE idempotency_records" in query:
+        if "UPDATE idempotency_records" in query:
             self.idempotency["response_body"] = args[0]
         return "INSERT 0 1"
 
