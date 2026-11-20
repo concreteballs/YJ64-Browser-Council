@@ -1,3 +1,4 @@
+import json
 import unittest
 from unittest.mock import AsyncMock, patch
 from contextlib import asynccontextmanager
@@ -21,6 +22,7 @@ class FakeConnection:
     def __init__(self):
         self.calls = []
         self.fetch_calls = 0
+        self.json_as_text = False
 
     async def fetchrow(self, query, *args):
         self.calls.append((query, args))
@@ -33,12 +35,14 @@ class FakeConnection:
         self.fetch_calls += 1
         if self.fetch_calls > 1:
             return []
+        resource = {"workspace_id": str(WORKSPACE_ID)}
+        payload = {"message_id": "message-1"}
         return [{
             "id": EVENT_ID,
             "sequence": 3,
             "event_type": "message.created",
-            "resource": {"workspace_id": str(WORKSPACE_ID)},
-            "payload": {"message_id": "message-1"},
+            "resource": json.dumps(resource) if self.json_as_text else resource,
+            "payload": json.dumps(payload) if self.json_as_text else payload,
             "occurred_at": datetime.now(timezone.utc),
         }]
 
@@ -100,6 +104,7 @@ class FakeStreamRequest:
 class WorkspaceEventStreamTests(unittest.IsolatedAsyncioTestCase):
     async def test_sse_replays_durable_event_with_sequence_id(self):
         database = FakeDatabase()
+        database.connection.json_as_text = True
         principal = Principal(PRINCIPAL_ID, "https://issuer.example", "user-123")
         request = FakeStreamRequest()
         with patch("apps.api.routes.events.asyncio.sleep", new=AsyncMock()):
