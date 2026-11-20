@@ -53,7 +53,9 @@ BEGIN
     RAISE EXCEPTION 'job did not persist completed state';
   END IF;
   INSERT INTO worker_jobs(id, workspace_id, job_type, max_attempts)
-    VALUES (retry_job, ws, 'test.retry', 2), (expiry_job, ws, 'test.expiry', 2);
+    VALUES (retry_job, ws, 'test.retry', 2);
+  INSERT INTO worker_jobs(id, workspace_id, job_type, max_attempts, available_at)
+    VALUES (expiry_job, ws, 'test.expiry', 2, now() + interval '1 hour');
   PERFORM set_config('test.retry_job_id', retry_job::text, false);
   PERFORM set_config('test.expiry_job_id', expiry_job::text, false);
 END $$;
