@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
 from apps.api.database import Database
+from apps.api.routes.workspaces import router as workspaces_router
 
 
 database = Database(os.getenv("DATABASE_URL"))
@@ -59,3 +60,5 @@ async def ready():
             "dependencies": dependencies,
         },
     )
+
+app.include_router(workspaces_router)
