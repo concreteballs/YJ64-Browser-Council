@@ -1,6 +1,6 @@
 # Durable worker queue
 
-**Status:** initial database-backed queue implementation; not yet a production worker service.
+**Status:** database-backed queue plus Council run transition/finalization functions; not yet a production worker service.
 
 ## Job contract
 
@@ -19,18 +19,19 @@ Failures are re-queued with bounded delay while attempts remain; the final failu
 
 ## Privilege boundary
 
-The worker role receives `EXECUTE` only on three narrowly scoped `SECURITY DEFINER` functions: claim, heartbeat and finish. It receives no direct table privileges. Functions use a fixed `search_path`, disable row security for their owner-controlled operation, validate lease durations and check lease ownership. Production provisioning must grant these function privileges to a dedicated worker database identity, never to the public API runtime identity.
+The worker role receives `EXECUTE` only on four narrowly scoped `SECURITY DEFINER` functions: claim, heartbeat, generic finish and Council-run completion. It receives no direct table privileges. Functions use a fixed `search_path`, disable row security for their owner-controlled operation, validate lease durations and check lease ownership. Production provisioning must grant these function privileges to a dedicated worker database identity, never to the public API runtime identity.
 
 Tenant users see queue rows only through workspace RLS. The database migration does not create production roles or credentials; deployment provisioning remains explicit.
 
 ## Current limitations
 
 - This is the durable queue persistence/client layer, not a running polling worker or deployed worker service.
-- Council run state/event transitions and user-facing cancellation endpoints are the next implementation batch.
+- Council run claim transitions, terminal failure/cancellation synchronization and outcome-gated completion are now implemented in migration `0003_council_run_lifecycle.sql`. The API can enqueue and inspect runs. A continuously running worker and user-facing run-cancel route remain open.
 - No model/provider calls are made by this queue layer.
-- The queue smoke test verifies least privilege, claim, heartbeat and completion. Concurrent claim and lease-expiry/retry cases remain to be expanded before acceptance.
+- The PostgreSQL smoke test verifies least privilege, claim, heartbeat, retry, lease expiry, cancellation acknowledgement, Council run start and outcome-gated completion. The API tests cover the enqueue contract.
 - Readiness remains `503` until a real worker service is deployed and verified.
 
 ## Cancellation API
 
 `POST /api/v1/jobs/{job_id}/cancel` is workspace-scoped. A queued job is cancelled immediately; a leased job receives a durable `cancel_requested_at` marker and remains leased until its worker acknowledges the request. Repeated requests are idempotent and do not emit duplicate request events. Terminal jobs remain unchanged. The worker heartbeat returns `false` after cancellation is requested; the worker must stop its operation and call finish, which records `cancelled` rather than success. The API writes `worker_job.cancelled` or `worker_job.cancel_requested` to the workspace event log in the same transaction as the state change.
+\n\n## Council run lifecycle\n\nA `council.run` job moves its linked run from `queued` to `running` when claimed. Final worker failure/cancellation is reflected in the run and emits a workspace event. A Council run cannot be completed through generic `worker_finish_job(..., succeeded=true)`; the worker must call `app.worker_complete_council_run` with one of the four allowed analytical outcomes and a JSON object result. That function atomically persists the result and outcome, completes the job, and emits `council_run.completed`. The API status endpoint returns the stored result. No result or consensus is fabricated by the queue.\n
