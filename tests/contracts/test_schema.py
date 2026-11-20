@@ -113,22 +113,21 @@ class ContractSchemaTests(unittest.TestCase):
         self.assertIn("evidence", self.external_v1["result"]["required"])
         self.assertIn("evidence_refs", self.schema["$defs"]["council_result"]["required"])
 
-    def test_create_run_rejects_duplicate_participants_and_unsafe_limits(self):
-        valid = {
-            "council_id": "council-001", "prompt": "Assess this proposal.",
-            "participant_ids": ["p-001", "p-002"],
-            "idempotency_key": "request-key-001",
-            "limits": {"timeout_seconds": 120, "max_rounds": 3,
-                       "max_output_tokens": 4000},
-        }
-        self.assert_definition_valid("create_run", valid)
-        invalid = dict(valid, participant_ids=["p-001", "p-001"])
+    def test_create_run_matches_idempotent_route_body(self):
+        self.assert_definition_valid("create_run", {"prompt": "Assess this proposal."})
         with self.assertRaises(ValidationError):
-            self.assert_definition_valid("create_run", invalid)
-        invalid = dict(valid, limits={"timeout_seconds": 1, "max_rounds": 3,
-                                      "max_output_tokens": 4000})
+            self.assert_definition_valid("create_run", {"prompt": " "})
         with self.assertRaises(ValidationError):
-            self.assert_definition_valid("create_run", invalid)
+            self.assert_definition_valid("create_run", {
+                "prompt": "Assess this proposal.", "idempotency_key": "request-key-001"
+            })
+
+    def test_council_profile_and_participant_request_schemas(self):
+        self.assert_definition_valid("create_council", {"name": "Engineering Council"})
+        self.assert_definition_valid("create_council_participant", {
+            "provider_connection_id": "pc-001", "display_name": "Model A",
+            "position": 0, "enabled": True,
+        })
 
 
 if __name__ == "__main__":
