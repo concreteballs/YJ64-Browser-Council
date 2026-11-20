@@ -87,6 +87,7 @@ class RunRead(BaseModel):
     created_at: datetime
     updated_at: datetime
     job_id: UUID | None = None
+    result: dict | None = None
 
 
 async def _append_event(connection, workspace_id: UUID, event_type: str,
@@ -337,7 +338,7 @@ async def get_council_run(
     async with database.tenant_transaction(principal.user_id) as connection:
         row = await connection.fetchrow(
             """
-            SELECT r.id, r.workspace_id, r.council_id, r.status, r.outcome,
+            SELECT r.id, r.workspace_id, r.council_id, r.status, r.outcome, r.result,
                    r.created_at, r.updated_at, j.id AS job_id
             FROM council_runs r
             LEFT JOIN worker_jobs j ON j.run_id = r.id AND j.workspace_id = r.workspace_id
@@ -347,4 +348,7 @@ async def get_council_run(
         )
     if row is None:
         raise HTTPException(status_code=404, detail="Council run not found")
-    return RunRead(**dict(row))
+    values = dict(row)
+    if isinstance(values.get("result"), str):
+        values["result"] = json.loads(values["result"])
+    return RunRead(**values)
