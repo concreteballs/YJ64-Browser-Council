@@ -33,6 +33,8 @@ class FakeConnection:
             return True
         if "finish" in query:
             return "completed"
+        if "complete_council_run" in query:
+            return "completed"
         return None
 
 
@@ -66,6 +68,18 @@ class WorkerQueueTests(unittest.IsolatedAsyncioTestCase):
             await queue.finish(JOB_ID, WORKER_ID, succeeded=True),
             "completed",
         )
+
+    async def test_council_completion_uses_outcome_gated_function(self):
+        queue = WorkerQueue(FakeDatabase())
+        result = await queue.complete_council_run(
+            JOB_ID, WORKER_ID, outcome="qualified_consensus",
+            result={"summary": "test", "limitations": []},
+        )
+        self.assertEqual(result, "completed")
+        query, args = queue.database.pool.connection.calls[-1]
+        self.assertIn("worker_complete_council_run", query)
+        self.assertEqual(args[0:3], (JOB_ID, WORKER_ID, "qualified_consensus"))
+        self.assertEqual(args[3], '{"summary": "test", "limitations": []}')
 
     async def test_unconfigured_database_fails_closed(self):
         queue = WorkerQueue(FakeDatabase(connected=False))
