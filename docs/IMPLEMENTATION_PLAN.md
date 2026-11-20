@@ -353,3 +353,22 @@ A feature or phase is complete only when:
 **Known limitations:** OIDC provider is not configured; no live sign-in. Database URL and production migration orchestration are not configured in Compose. Provider connections are metadata-only and remain unconfigured; no secret-manager or model adapter. No assistant response generation, durable worker, SSE/event replay, cancellation, attachments, evidence search or Browser Agent. The composer remains a local preview. API readiness remains 503 until the worker is implemented.
 
 **Next action:** implement the durable worker/run lifecycle and event replay/SSE contracts, then connect a first real API provider adapter. Keep all provider calls asynchronous, cancellable and idempotent where safe; do not claim success when provider delivery is uncertain.
+
+
+---
+
+## 10. Execution batch J — durable worker queue foundation (in progress)
+
+**Implemented in this batch:**
+- Added additive migration `0002_durable_worker_queue.sql` with tenant-owned jobs, bounded attempts, delayed availability, leases, heartbeats, cancellation-request metadata and terminal states.
+- Added database claim/heartbeat/finish functions. Claims use `FOR UPDATE SKIP LOCKED`; expired leases are recoverable and exhausted leases become failed.
+- Restricted the worker database identity to three `SECURITY DEFINER` functions; the worker has no direct queue-table privileges. The public API runtime role is separate.
+- Added a typed async queue client and unit tests.
+- Extended the PostgreSQL CI smoke script to apply both migrations and verify worker least privilege, claim, heartbeat and completion.
+- Documented the contract and current limits in [WORKER_QUEUE.md](WORKER_QUEUE.md).
+
+**Not yet complete:** this is not a running worker process. Council run transitions/events, cancellation API, retry/lease-expiry/concurrent-claim integration tests, worker deployment and readiness integration remain open. No provider calls are made.
+
+**Acceptance gate:** CI must pass the new migration and smoke tests; additional recovery/cancellation/concurrency tests must pass before marking the queue foundation complete. API readiness remains 503 until an actual worker service is operational and verified.
+
+**Next action:** finish run/event lifecycle and cancellation semantics, then add worker polling/deployment and event replay/SSE.
