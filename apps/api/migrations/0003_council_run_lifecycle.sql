@@ -4,6 +4,9 @@ BEGIN;
 ALTER TABLE public.council_runs
   ADD COLUMN IF NOT EXISTS result jsonb;
 
+CREATE UNIQUE INDEX IF NOT EXISTS idx_worker_jobs_one_per_run
+  ON public.worker_jobs(run_id) WHERE run_id IS NOT NULL;
+
 CREATE OR REPLACE FUNCTION app.worker_claim_job(p_worker_id uuid, p_lease_seconds integer)
 RETURNS TABLE (
   id uuid, workspace_id uuid, run_id uuid, job_type varchar,
