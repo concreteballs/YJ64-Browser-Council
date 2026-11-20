@@ -20,37 +20,81 @@ AS $$
 DECLARE claimed public.worker_jobs%ROWTYPE;
 DECLARE changed integer;
 DECLARE event_sequence bigint;
+DECLARE expired_job record;
 BEGIN
   IF p_worker_id IS NULL OR p_lease_seconds < 15 OR p_lease_seconds > 3600 THEN
     RAISE EXCEPTION 'invalid worker claim parameters' USING ERRCODE = '22023';
   END IF;
 
-  UPDATE public.worker_jobs j
-  SET status = 'cancelled', lease_owner = NULL, lease_expires_at = NULL,
-      heartbeat_at = NULL, updated_at = now()
-  WHERE j.status = 'leased' AND j.cancel_requested_at IS NOT NULL
-    AND j.lease_expires_at <= now();
+  FOR expired_job IN
+    UPDATE public.worker_jobs j
+    SET status = 'cancelled', lease_owner = NULL, lease_expires_at = NULL,
+        heartbeat_at = NULL, updated_at = now()
+    WHERE j.status = 'leased' AND j.cancel_requested_at IS NOT NULL
+      AND j.lease_expires_at <= now()
+    RETURNING j.id, j.workspace_id, j.run_id
+  LOOP
+    IF expired_job.run_id IS NOT NULL THEN
+      UPDATE public.council_runs
+      SET status = 'cancelled', updated_at = now()
+      WHERE id = expired_job.run_id AND workspace_id = expired_job.workspace_id
+        AND status IN ('queued','running');
+      GET DIAGNOSTICS changed = ROW_COUNT;
+      IF changed = 1 THEN
+        UPDATE public.workspace_event_counters
+        SET last_sequence = last_sequence + 1
+        WHERE workspace_id = expired_job.workspace_id
+        RETURNING last_sequence INTO event_sequence;
+        IF event_sequence IS NULL THEN
+          RAISE EXCEPTION 'workspace event counter is missing';
+        END IF;
+        INSERT INTO public.workspace_events
+          (workspace_id, sequence, event_type, resource, payload)
+        VALUES (
+          expired_job.workspace_id, event_sequence, 'council_run.cancelled',
+          jsonb_build_object('workspace_id', expired_job.workspace_id,
+                             'run_id', expired_job.run_id, 'job_id', expired_job.id),
+          jsonb_build_object('status', 'cancelled', 'reason', 'lease_expired_after_cancel')
+        );
+      END IF;
+    END IF;
+  END LOOP;
 
-  UPDATE public.council_runs r
-  SET status = 'cancelled', updated_at = now()
-  FROM public.worker_jobs j
-  WHERE j.run_id = r.id AND j.workspace_id = r.workspace_id
-    AND j.status = 'cancelled' AND j.cancel_requested_at IS NOT NULL
-    AND r.status IN ('queued','running');
-
-  UPDATE public.worker_jobs j
-  SET status = 'failed', lease_owner = NULL, lease_expires_at = NULL,
-      heartbeat_at = NULL, last_error_code = 'lease_expired_max_attempts',
-      updated_at = now()
-  WHERE j.status = 'leased' AND j.lease_expires_at <= now()
-    AND j.attempts >= j.max_attempts;
-
-  UPDATE public.council_runs r
-  SET status = 'failed', updated_at = now()
-  FROM public.worker_jobs j
-  WHERE j.run_id = r.id AND j.workspace_id = r.workspace_id
-    AND j.status = 'failed' AND j.last_error_code = 'lease_expired_max_attempts'
-    AND r.status IN ('queued','running');
+  FOR expired_job IN
+    UPDATE public.worker_jobs j
+    SET status = 'failed', lease_owner = NULL, lease_expires_at = NULL,
+        heartbeat_at = NULL, last_error_code = 'lease_expired_max_attempts',
+        updated_at = now()
+    WHERE j.status = 'leased' AND j.lease_expires_at <= now()
+      AND j.attempts >= j.max_attempts
+    RETURNING j.id, j.workspace_id, j.run_id
+  LOOP
+    IF expired_job.run_id IS NOT NULL THEN
+      UPDATE public.council_runs
+      SET status = 'failed', updated_at = now()
+      WHERE id = expired_job.run_id AND workspace_id = expired_job.workspace_id
+        AND status IN ('queued','running');
+      GET DIAGNOSTICS changed = ROW_COUNT;
+      IF changed = 1 THEN
+        UPDATE public.workspace_event_counters
+        SET last_sequence = last_sequence + 1
+        WHERE workspace_id = expired_job.workspace_id
+        RETURNING last_sequence INTO event_sequence;
+        IF event_sequence IS NULL THEN
+          RAISE EXCEPTION 'workspace event counter is missing';
+        END IF;
+        INSERT INTO public.workspace_events
+          (workspace_id, sequence, event_type, resource, payload)
+        VALUES (
+          expired_job.workspace_id, event_sequence, 'council_run.failed',
+          jsonb_build_object('workspace_id', expired_job.workspace_id,
+                             'run_id', expired_job.run_id, 'job_id', expired_job.id),
+          jsonb_build_object('status', 'failed',
+                             'error_code', 'lease_expired_max_attempts')
+        );
+      END IF;
+    END IF;
+  END LOOP;
 
   WITH candidate AS (
     SELECT j.id
@@ -148,6 +192,26 @@ BEGIN
     IF j.run_id IS NOT NULL THEN
       UPDATE public.council_runs SET status = 'queued', updated_at = now()
       WHERE id = j.run_id AND workspace_id = j.workspace_id AND status = 'running';
+      GET DIAGNOSTICS changed = ROW_COUNT;
+      IF changed = 1 THEN
+        UPDATE public.workspace_event_counters
+        SET last_sequence = last_sequence + 1
+        WHERE workspace_id = j.workspace_id
+        RETURNING last_sequence INTO event_sequence;
+        IF event_sequence IS NULL THEN
+          RAISE EXCEPTION 'workspace event counter is missing';
+        END IF;
+        INSERT INTO public.workspace_events
+          (workspace_id, sequence, event_type, resource, payload)
+        VALUES (
+          j.workspace_id, event_sequence, 'council_run.retry_scheduled',
+          jsonb_build_object('workspace_id', j.workspace_id,
+                             'run_id', j.run_id, 'job_id', j.id),
+          jsonb_build_object('status', 'queued',
+                             'attempt', j.attempts,
+                             'error_code', COALESCE(p_error_code, 'worker_error'))
+        );
+      END IF;
     END IF;
     RETURN 'queued';
   ELSE
