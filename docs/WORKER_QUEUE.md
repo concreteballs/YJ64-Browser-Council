@@ -30,3 +30,7 @@ Tenant users see queue rows only through workspace RLS. The database migration d
 - No model/provider calls are made by this queue layer.
 - The queue smoke test verifies least privilege, claim, heartbeat and completion. Concurrent claim and lease-expiry/retry cases remain to be expanded before acceptance.
 - Readiness remains `503` until a real worker service is deployed and verified.
+
+## Cancellation API
+
+`POST /api/v1/jobs/{job_id}/cancel` is workspace-scoped. A queued job is cancelled immediately; a leased job receives a durable `cancel_requested_at` marker and remains leased until its worker acknowledges the request. Repeated requests are idempotent and do not emit duplicate request events. Terminal jobs remain unchanged. The worker heartbeat returns `false` after cancellation is requested; the worker must stop its operation and call finish, which records `cancelled` rather than success. The API writes `worker_job.cancelled` or `worker_job.cancel_requested` to the workspace event log in the same transaction as the state change.
