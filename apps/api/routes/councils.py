@@ -352,3 +352,79 @@ async def get_council_run(
     if isinstance(values.get("result"), str):
         values["result"] = json.loads(values["result"])
     return RunRead(**values)
+
+
+class RunCancellationRead(BaseModel):
+    id: UUID
+    status: str
+    cancellation_requested: bool
+
+
+@run_router.post("/{run_id}/cancel", response_model=RunCancellationRead)
+async def cancel_council_run(
+    run_id: UUID,
+    principal: Annotated[Principal, Depends(get_current_principal)],
+    database: Annotated[Database, Depends(get_database)],
+):
+    async with database.tenant_transaction(principal.user_id) as connection:
+        row = await connection.fetchrow(
+            """
+            SELECT r.id, r.workspace_id, r.status, j.id AS job_id,
+                   j.status AS job_status, j.cancel_requested_at
+            FROM council_runs r
+            LEFT JOIN worker_jobs j
+              ON j.run_id = r.id AND j.workspace_id = r.workspace_id
+            WHERE r.id = $1
+            FOR UPDATE OF r
+            """,
+            run_id,
+        )
+        if row is None:
+            raise HTTPException(status_code=404, detail="Council run not found")
+        if row["job_id"] is None:
+            raise HTTPException(status_code=409, detail="Council run has no worker job")
+
+        run_status = row["status"]
+        cancellation_requested = False
+        event_type = None
+        if row["job_status"] == "queued" and run_status == "queued":
+            await connection.execute(
+                """
+                UPDATE worker_jobs SET status = 'cancelled', updated_at = now()
+                WHERE id = $1 AND status = 'queued'
+                """,
+                row["job_id"],
+            )
+            await connection.execute(
+                """
+                UPDATE council_runs SET status = 'cancelled', updated_at = now()
+                WHERE id = $1 AND status = 'queued'
+                """,
+                run_id,
+            )
+            run_status = "cancelled"
+            event_type = "council_run.cancelled"
+        elif row["job_status"] == "leased" and run_status == "running":
+            if row["cancel_requested_at"] is None:
+                await connection.execute(
+                    """
+                    UPDATE worker_jobs SET cancel_requested_at = now(), updated_at = now()
+                    WHERE id = $1 AND status = 'leased' AND cancel_requested_at IS NULL
+                    """,
+                    row["job_id"],
+                )
+                event_type = "council_run.cancel_requested"
+            cancellation_requested = True
+
+        if event_type:
+            await _append_event(
+                connection, row["workspace_id"], event_type,
+                {"workspace_id": str(row["workspace_id"]), "run_id": str(run_id),
+                 "job_id": str(row["job_id"])},
+                {"status": run_status, "cancellation_requested": cancellation_requested},
+            )
+
+    return RunCancellationRead(
+        id=run_id, status=run_status,
+        cancellation_requested=cancellation_requested,
+    )
