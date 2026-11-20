@@ -340,12 +340,14 @@ A feature or phase is complete only when:
 
 **Completed**
 - Phase A / Batch A: repository baseline, licensing/reuse policy and MVP boundary.
-- Batch B: internal API/event schema, Draft 2020-12 validation and external v1 compatibility snapshot. Eight contract tests passed in GitHub Actions.
-- Initial Batch C foundation: FastAPI service, liveness/readiness endpoints, Dockerfile, two API health tests and API container smoke test. The CI run on commit `61196e4c4d9ee6b3ae1382ed10943ed7a42da9cb` passed.
-- Web client foundation: responsive React/TypeScript shell, Council/individual-chat navigation, local-only draft composer, API liveness indicator, PWA manifest/service worker, Nginx reverse proxy, web container and Compose topology.
+- Batch B: internal API/event schema, Draft 2020-12 validation and external v1 compatibility snapshot. Eight contract tests passed.
+- API foundation: FastAPI liveness/readiness endpoints, API container and health tests.
+- Web foundation: responsive React/TypeScript shell, Council/individual-chat modes, local-only draft composer, API liveness indicator, PWA manifest/service worker, Nginx reverse proxy and Compose topology. The complete CI run on `cc01c49c9c16e94fee5fdf6739fdec7bd90e8988` passed, including web build, Compose validation and both container builds.
+- Persistence design: initial PostgreSQL core migration with workspace membership, conversations/messages, provider metadata, councils/participants/runs, durable event sequence and idempotency records.
+- Tenant security baseline: RLS policies and composite workspace-scoped foreign keys. Added a CI smoke test that creates a non-owner runtime role and checks cross-tenant read/write denial.
 
-**Current batch C status:** web build and Compose validation have been added to GitHub Actions. Await the new CI result before treating the web client/container as validated.
+**Current status:** PostgreSQL migration/RLS regression test has just been added to CI. Its result is pending; do not treat the migration as validated until that job passes.
 
-**Known limitations:** no authentication, tenant persistence, database, durable worker, provider credentials/adapters, real model responses, streaming, file uploads or Browser Agent. The composer is explicitly a local preview. API readiness remains closed (503) until dependencies are real.
+**Known limitations:** API is not yet connected to PostgreSQL. No authentication, tenant persistence runtime, durable worker, provider credentials/adapters, real model responses, streaming, uploads, research execution or Browser Agent. The composer remains a local preview. API readiness remains 503.
 
-**Next action:** verify the new CI run. Fix any build/runtime errors before proceeding to database migrations, tenant isolation and authentication design. Keep provider integration and persistence behind explicit server-side contracts.
+**Next action:** validate the migration against PostgreSQL and fix any RLS/schema errors. Then implement database connection lifecycle and authentication-derived transaction context before exposing workspace routes. Never accept tenant identity from client-supplied IDs or unverified headers.
