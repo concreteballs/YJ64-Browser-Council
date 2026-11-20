@@ -30,6 +30,8 @@ docker exec -i "$container" psql -v ON_ERROR_STOP=1 -U postgres -d postgres \
   < apps/api/migrations/0001_workspace_core.sql
 docker exec -i "$container" psql -v ON_ERROR_STOP=1 -U postgres -d postgres \
   < apps/api/migrations/0002_durable_worker_queue.sql
+docker exec -i "$container" psql -v ON_ERROR_STOP=1 -U postgres -d postgres \
+  < apps/api/migrations/0003_council_run_lifecycle.sql
 docker exec -i "$container" psql -v ON_ERROR_STOP=1 -U postgres -d postgres <<'SQL'
 GRANT USAGE ON SCHEMA public, app TO browser_council_runtime;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO browser_council_runtime;
@@ -38,10 +40,12 @@ GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA app TO browser_council_runtime;
 REVOKE EXECUTE ON FUNCTION app.worker_claim_job(uuid, integer) FROM browser_council_runtime;
 REVOKE EXECUTE ON FUNCTION app.worker_heartbeat_job(uuid, uuid, integer) FROM browser_council_runtime;
 REVOKE EXECUTE ON FUNCTION app.worker_finish_job(uuid, uuid, boolean, varchar, integer) FROM browser_council_runtime;
+REVOKE EXECUTE ON FUNCTION app.worker_complete_council_run(uuid, uuid, varchar, jsonb) FROM browser_council_runtime;
 GRANT USAGE ON SCHEMA app TO browser_council_worker;
 GRANT EXECUTE ON FUNCTION app.worker_claim_job(uuid, integer) TO browser_council_worker;
 GRANT EXECUTE ON FUNCTION app.worker_heartbeat_job(uuid, uuid, integer) TO browser_council_worker;
 GRANT EXECUTE ON FUNCTION app.worker_finish_job(uuid, uuid, boolean, varchar, integer) TO browser_council_worker;
+GRANT EXECUTE ON FUNCTION app.worker_complete_council_run(uuid, uuid, varchar, jsonb) TO browser_council_worker;
 SQL
 
 docker exec -i "$container" psql -v ON_ERROR_STOP=1 -U postgres -d postgres \
