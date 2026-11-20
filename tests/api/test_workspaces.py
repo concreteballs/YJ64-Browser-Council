@@ -64,7 +64,8 @@ class WorkspaceRouteTests(unittest.TestCase):
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.json()["name"], "Research")
         self.assertEqual(self.database.principal_id, self.principal.user_id)
-        self.assertEqual(len(self.database.connection.executed), 3)
+        self.assertEqual(len(self.database.connection.executed), 4)
+        self.assertTrue(any("workspace.created" in query for query, _ in self.database.connection.executed))
 
     def test_list_workspaces_uses_tenant_transaction(self):
         response = self.client.get("/api/v1/workspaces")
