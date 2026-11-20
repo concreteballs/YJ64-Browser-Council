@@ -42,10 +42,13 @@ class Database:
     async def tenant_transaction(self, principal_id: UUID) -> AsyncIterator[asyncpg.Connection]:
         if self.pool is None:
             raise RuntimeError("Database pool is not connected")
-        async with self.pool.acquire() as connection:
+        connection = await self.pool.acquire()
+        try:
             async with connection.transaction():
                 await connection.execute(
                     "SELECT set_config('app.user_id', $1, true)",
                     str(principal_id),
                 )
                 yield connection
+        finally:
+            await self.pool.release(connection)
