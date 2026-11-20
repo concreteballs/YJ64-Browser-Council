@@ -4,7 +4,7 @@ Independent, multi-model research and deliberation environment for the YJ64 ecos
 
 ## Project status
 
-**Phase 2 — cloud-first foundation.** Batches A and B are complete. The FastAPI service and responsive React/TypeScript PWA shell are in place. CI now builds both containers and validates Compose; the PostgreSQL tenant schema and RLS regression test pass in CI; the API now has an asyncpg pool lifecycle and transaction-local tenant context. Provider-neutral OIDC verification and initial protected workspace list/create routes are implemented and tested. Provider metadata, conversation creation, ordered message history and idempotent user-message persistence are implemented. Actual model execution, worker and streaming remain pending.
+**Phase 2 — cloud-first foundation.** Batches A and B are complete. The FastAPI service and responsive React/TypeScript PWA shell are in place. CI now builds both containers and validates Compose; the PostgreSQL tenant schema and RLS regression test pass in CI; the API now has an asyncpg pool lifecycle and transaction-local tenant context. Provider-neutral OIDC verification and initial protected workspace list/create routes are implemented and tested. Provider metadata, conversation creation, ordered message history and idempotent user-message persistence are implemented. A durable PostgreSQL worker queue foundation is now implemented with leases, heartbeats, bounded retries, expired-lease recovery and a dedicated least-privilege worker function boundary. A typed queue client and database smoke tests are included. A continuously running worker, run/event transitions, user cancellation, provider execution and streaming remain pending.
 
 ## Documents
 
@@ -22,6 +22,7 @@ Independent, multi-model research and deliberation environment for the YJ64 ecos
 - [Authentication boundary](docs/AUTHENTICATION_BOUNDARY.md)
 - [Workspace API](docs/WORKSPACE_API.md)
 - [Conversation and message API](docs/CONVERSATION_API.md)
+- [Durable worker queue](docs/WORKER_QUEUE.md)
 
 ## Non-negotiable boundaries
 
