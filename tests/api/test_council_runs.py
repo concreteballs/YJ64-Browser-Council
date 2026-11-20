@@ -88,8 +88,12 @@ class CouncilRunApiTests(unittest.TestCase):
             args for query, args in self.database.connection.calls
             if "INSERT INTO worker_jobs" in query
         )
-        self.assertEqual(job_call[2], "council.run")
-        payload = json.loads(job_call[3])
+        job_query = next(
+            query for query, args in self.database.connection.calls
+            if "INSERT INTO worker_jobs" in query
+        )
+        self.assertIn("'council.run'", job_query)
+        payload = json.loads(job_call[2])
         self.assertEqual(payload, {"run_id": str(RUN_ID)})
         self.assertNotIn("prompt", payload)
 
