@@ -263,6 +263,22 @@ BEGIN
   IF app.worker_finish_job(job_id, worker_id, true, NULL, 30) <> 'completion_required' THEN
     RAISE EXCEPTION 'generic completion bypassed Council result finalization';
   END IF;
+  BEGIN
+    PERFORM app.worker_complete_council_run(
+      job_id, worker_id, 'consensus',
+      jsonb_build_object(
+        'run_id', current_setting('test.council_run_id'),
+        'status', 'completed', 'outcome', 'consensus',
+        'summary', 'unsupported consensus',
+        'participant_positions', '[]'::jsonb, 'dissent', '[]'::jsonb,
+        'claims', '[]'::jsonb, 'evidence_refs', '[]'::jsonb,
+        'assumptions', '[]'::jsonb, 'limitations', '[]'::jsonb
+      )
+    );
+    RAISE EXCEPTION 'unsupported consensus result was accepted';
+  EXCEPTION WHEN invalid_parameter_value THEN
+    NULL;
+  END;
   IF app.worker_complete_council_run(
     job_id, worker_id, 'insufficient_evidence',
     jsonb_build_object(
