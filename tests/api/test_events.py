@@ -107,7 +107,7 @@ class WorkspaceEventStreamTests(unittest.IsolatedAsyncioTestCase):
                 WORKSPACE_ID, request, principal, database, "2"
             )
             chunks = [chunk async for chunk in response.body_iterator]
-        body = b"".join(chunks).decode("utf-8")
+        body = "".join(chunk.decode("utf-8") if isinstance(chunk, bytes) else chunk for chunk in chunks)
         self.assertIn("id: 3", body)
         self.assertIn("event: message.created", body)
         self.assertIn('"sequence":3', body)
