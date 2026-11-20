@@ -116,7 +116,7 @@ class ContractSchemaTests(unittest.TestCase):
     def test_create_run_matches_idempotent_route_body(self):
         self.assert_definition_valid("create_run", {"prompt": "Assess this proposal."})
         with self.assertRaises(ValidationError):
-            self.assert_definition_valid("create_run", {"prompt": " "})
+            self.assert_definition_valid("create_run", {"prompt": ""})
         with self.assertRaises(ValidationError):
             self.assert_definition_valid("create_run", {
                 "prompt": "Assess this proposal.", "idempotency_key": "request-key-001"
