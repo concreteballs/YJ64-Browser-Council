@@ -13,7 +13,7 @@ Allowed states:
 
 ## Concurrency and recovery
 
-`app.worker_claim_job` claims one eligible job with `FOR UPDATE SKIP LOCKED`. A concurrent worker skips rows already locked by another claimant. Expired leases can be reclaimed, incrementing `attempts`. Expired leases at the attempt limit are marked failed. A worker may heartbeat or finish only while it owns a live lease. A stale worker receives `lease_lost` and cannot overwrite the new owner's state.
+`app.worker_claim_job` claims one eligible job with `FOR UPDATE SKIP LOCKED`. A concurrent worker skips rows already locked by another claimant. Expired leases can be reclaimed, incrementing `attempts`. Expired leases at the attempt limit are marked failed. If cancellation was requested before a worker disappeared, lease recovery finalizes the job as `cancelled` instead of retrying it or leaving it leased indefinitely. A worker may heartbeat or finish only while it owns a live lease. A stale worker receives `lease_lost` and cannot overwrite the new owner's state.
 
 Failures are re-queued with bounded delay while attempts remain; the final failure is terminal. The queue does not automatically retry uncertain external side effects: provider adapters must classify/reconcile those operations before deciding whether a job is safe to retry.
 
