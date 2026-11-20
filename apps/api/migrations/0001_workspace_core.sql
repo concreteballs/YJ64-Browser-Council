@@ -105,6 +105,7 @@ CREATE TABLE IF NOT EXISTS messages (
   workspace_id uuid NOT NULL,
   conversation_id uuid NOT NULL,
   turn_id uuid,
+  client_message_id varchar(128) NOT NULL,
   role varchar(24) NOT NULL CHECK (role IN ('system','user','assistant','tool')),
   content text NOT NULL CHECK (length(content) <= 100000),
   status varchar(24) NOT NULL DEFAULT 'completed'
@@ -114,7 +115,17 @@ CREATE TABLE IF NOT EXISTS messages (
   FOREIGN KEY (workspace_id, conversation_id)
     REFERENCES conversations(workspace_id, id) ON DELETE CASCADE,
   UNIQUE (conversation_id, sequence),
+  UNIQUE (conversation_id, client_message_id),
   UNIQUE (workspace_id, id)
+);
+
+CREATE TABLE IF NOT EXISTS conversation_counters (
+  workspace_id uuid NOT NULL,
+  conversation_id uuid NOT NULL,
+  last_sequence bigint NOT NULL DEFAULT 0 CHECK (last_sequence >= 0),
+  PRIMARY KEY (conversation_id),
+  FOREIGN KEY (workspace_id, conversation_id)
+    REFERENCES conversations(workspace_id, id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS councils (
@@ -196,6 +207,7 @@ CREATE TABLE IF NOT EXISTS idempotency_records (
 CREATE INDEX IF NOT EXISTS idx_workspace_members_user ON workspace_members(user_id, workspace_id);
 CREATE INDEX IF NOT EXISTS idx_conversations_workspace_updated ON conversations(workspace_id, updated_at DESC);
 CREATE INDEX IF NOT EXISTS idx_messages_conversation_sequence ON messages(conversation_id, sequence);
+CREATE INDEX IF NOT EXISTS idx_conversation_counters_workspace ON conversation_counters(workspace_id, conversation_id);
 CREATE INDEX IF NOT EXISTS idx_council_runs_workspace_created ON council_runs(workspace_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_workspace_events_replay ON workspace_events(workspace_id, sequence);
 CREATE INDEX IF NOT EXISTS idx_idempotency_expiry ON idempotency_records(expires_at);
@@ -240,7 +252,7 @@ DO $$
 DECLARE t text;
 BEGIN
   FOREACH t IN ARRAY ARRAY[
-    'provider_connections','conversations','messages','councils',
+    'provider_connections','conversations','messages','conversation_counters','councils',
     'council_participants','council_runs','workspace_event_counters',
     'workspace_events','idempotency_records'
   ] LOOP
