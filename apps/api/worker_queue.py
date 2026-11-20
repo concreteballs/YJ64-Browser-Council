@@ -67,3 +67,25 @@ class WorkerQueue:
                 error_code,
                 retry_delay_seconds,
             )
+
+    async def complete_council_run(
+        self,
+        job_id: UUID,
+        worker_id: UUID,
+        *,
+        outcome: str,
+        result: dict[str, Any],
+    ) -> str:
+        """Atomically persist a Council result/outcome and complete its leased job."""
+        if self.database.pool is None:
+            raise RuntimeError("Database pool is not connected")
+        import json
+
+        async with self.database.pool.acquire() as connection:
+            return await connection.fetchval(
+                "SELECT app.worker_complete_council_run($1, $2, $3, $4::jsonb)",
+                job_id,
+                worker_id,
+                outcome,
+                json.dumps(result),
+            )
