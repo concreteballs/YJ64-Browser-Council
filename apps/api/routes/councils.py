@@ -435,7 +435,7 @@ async def cancel_council_run(
             await _append_event(
                 connection, row["workspace_id"], event_type,
                 {"workspace_id": str(row["workspace_id"]), "run_id": str(run_id),
-                 "job_id": str(row["job_id"])},
+                 "job_id": str(job["id"])},
                 {"status": run_status, "cancellation_requested": cancellation_requested},
             )
 
