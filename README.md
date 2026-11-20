@@ -4,7 +4,7 @@ Independent, multi-model research and deliberation environment for the YJ64 ecos
 
 ## Project status
 
-**Phase 2 — cloud-first foundation.** Batches A and B are complete. The FastAPI service and responsive React/TypeScript PWA shell are in place. CI now builds both containers and validates Compose; the PostgreSQL tenant schema and RLS regression test pass in CI; the API now has an asyncpg pool lifecycle and transaction-local tenant context. Provider-neutral OIDC verification and initial protected workspace list/create routes are implemented and tested. Provider configuration, conversation APIs and real model execution remain pending.
+**Phase 2 — cloud-first foundation.** Batches A and B are complete. The FastAPI service and responsive React/TypeScript PWA shell are in place. CI now builds both containers and validates Compose; the PostgreSQL tenant schema and RLS regression test pass in CI; the API now has an asyncpg pool lifecycle and transaction-local tenant context. Provider-neutral OIDC verification and initial protected workspace list/create routes are implemented and tested. Provider metadata, conversation creation, ordered message history and idempotent user-message persistence are implemented. Actual model execution, worker and streaming remain pending.
 
 ## Documents
 
@@ -21,6 +21,7 @@ Independent, multi-model research and deliberation environment for the YJ64 ecos
 - [API database lifecycle](docs/API_DATABASE_LIFECYCLE.md)
 - [Authentication boundary](docs/AUTHENTICATION_BOUNDARY.md)
 - [Workspace API](docs/WORKSPACE_API.md)
+- [Conversation and message API](docs/CONVERSATION_API.md)
 
 ## Non-negotiable boundaries
 
