@@ -30,7 +30,7 @@ class FakeConnection:
         self.calls.append((query, args))
         if "SELECT id, workspace_id FROM councils" in query:
             return {"id": COUNCIL_ID, "workspace_id": WORKSPACE_ID}
-        if "count(*) AS total" in query:
+        if "count(*) FILTER (WHERE p.enabled) AS total" in query:
             return {"total": self.participant_count, "ready": self.ready_count}
         if "INSERT INTO idempotency_records" in query:
             return {"id": UUID("ffffffff-ffff-4fff-8fff-ffffffffffff")} if self.idempotency_inserted else None
