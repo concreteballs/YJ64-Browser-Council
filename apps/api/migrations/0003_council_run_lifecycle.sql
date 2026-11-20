@@ -203,7 +203,7 @@ AS $$
 DECLARE j public.worker_jobs%ROWTYPE;
 DECLARE event_sequence bigint;
 BEGIN
-  IF p_outcome NOT IN (
+  IF p_outcome IS NULL OR p_outcome NOT IN (
     'consensus','qualified_consensus','unresolved_disagreement','insufficient_evidence'
   ) OR p_result IS NULL OR jsonb_typeof(p_result) <> 'object' THEN
     RAISE EXCEPTION 'invalid Council run result' USING ERRCODE = '22023';
