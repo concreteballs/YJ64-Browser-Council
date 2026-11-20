@@ -225,3 +225,76 @@ BEGIN
     RAISE EXCEPTION 'expired cancellation request was not finalized';
   END IF;
 END $$;
+
+
+-- Council runs transition on claim and complete only with a persisted outcome/result.
+DO $$
+DECLARE ws uuid := current_setting('test.worker_workspace_id')::uuid;
+DECLARE council uuid := gen_random_uuid();
+DECLARE run uuid := gen_random_uuid();
+DECLARE job uuid := gen_random_uuid();
+DECLARE owner_id uuid;
+BEGIN
+  SELECT user_id INTO owner_id FROM workspace_members
+  WHERE workspace_id = ws AND role = 'owner' LIMIT 1;
+  INSERT INTO councils(id, workspace_id, name, created_by)
+    VALUES (council, ws, 'Lifecycle smoke council', owner_id);
+  INSERT INTO council_runs(id, workspace_id, council_id, prompt, created_by)
+    VALUES (run, ws, council, 'Validate lifecycle state transitions', owner_id);
+  INSERT INTO worker_jobs(id, workspace_id, run_id, job_type, payload)
+    VALUES (job, ws, run, 'council.run', jsonb_build_object('run_id', run));
+  PERFORM set_config('test.council_run_id', run::text, false);
+  PERFORM set_config('test.council_job_id', job::text, false);
+END $$;
+
+SET ROLE browser_council_worker;
+DO $$
+DECLARE job_id uuid := current_setting('test.council_job_id')::uuid;
+DECLARE worker_id uuid := gen_random_uuid();
+DECLARE claimed record;
+BEGIN
+  SELECT * INTO claimed FROM app.worker_claim_job(worker_id, 60);
+  IF claimed.id IS DISTINCT FROM job_id OR claimed.job_type <> 'council.run' THEN
+    RAISE EXCEPTION 'Council run job was not claimed';
+  END IF;
+  PERFORM set_config('test.council_worker_id', worker_id::text, false);
+  IF app.worker_finish_job(job_id, worker_id, true, NULL, 30) <> 'completion_required' THEN
+    RAISE EXCEPTION 'generic completion bypassed Council result finalization';
+  END IF;
+  IF app.worker_complete_council_run(
+    job_id, worker_id, 'qualified_consensus',
+    '{"summary":"smoke result","limitations":["test fixture"]}'::jsonb
+  ) <> 'completed' THEN
+    RAISE EXCEPTION 'Council run did not complete with a validated outcome';
+  END IF;
+END $$;
+RESET ROLE;
+
+DO $$
+DECLARE run_id uuid := current_setting('test.council_run_id')::uuid;
+DECLARE job_id uuid := current_setting('test.council_job_id')::uuid;
+BEGIN
+  IF (SELECT status FROM council_runs WHERE id = run_id) <> 'completed' THEN
+    RAISE EXCEPTION 'Council run status was not completed';
+  END IF;
+  IF (SELECT outcome FROM council_runs WHERE id = run_id) <> 'qualified_consensus' THEN
+    RAISE EXCEPTION 'Council run outcome was not persisted';
+  END IF;
+  IF (SELECT result->>'summary' FROM council_runs WHERE id = run_id) <> 'smoke result' THEN
+    RAISE EXCEPTION 'Council run result was not persisted';
+  END IF;
+  IF (SELECT status FROM worker_jobs WHERE id = job_id) <> 'completed' THEN
+    RAISE EXCEPTION 'Council run queue job was not completed';
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM workspace_events
+    WHERE workspace_id = current_setting('test.worker_workspace_id')::uuid
+      AND event_type = 'council_run.started'
+  ) OR NOT EXISTS (
+    SELECT 1 FROM workspace_events
+    WHERE workspace_id = current_setting('test.worker_workspace_id')::uuid
+      AND event_type = 'council_run.completed'
+  ) THEN
+    RAISE EXCEPTION 'Council run lifecycle events are missing';
+  END IF;
+END $$;
