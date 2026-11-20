@@ -375,3 +375,6 @@ A feature or phase is complete only when:
 
 
 **Execution batch J2:** added tenant-scoped `POST /api/v1/jobs/{job_id}/cancel`. Queued work transitions immediately to `cancelled`; leased work receives a durable cancellation request and stays leased until worker acknowledgement. Repeated requests are idempotent; terminal jobs are unchanged. Workspace events are written atomically with API cancellation transitions. Added route tests and database smoke coverage proving the worker stops heartbeating and finishes as `cancelled`. CI validation is pending for this latest batch. The running worker process, run lifecycle integration and SSE replay remain open.
+
+
+**Execution batch K1:** implemented tenant-checked workspace event replay (`after_sequence`, bounded page size) and an SSE stream that resumes from `Last-Event-ID`, replays persisted events in sequence order, emits durable sequence IDs and sends keep-alives. Added tests for cursor replay and invalid bounds/cursors. This is a workspace event stream, not yet token streaming from a model provider. The stream currently uses bounded database polling; a continuously running worker and end-to-end model streaming remain open.
