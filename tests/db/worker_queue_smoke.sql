@@ -137,3 +137,44 @@ BEGIN
   END IF;
 END $$;
 RESET ROLE;
+
+-- A running worker acknowledges a cancellation request as a cancelled terminal job.
+DO $$
+DECLARE ws uuid := current_setting('test.worker_workspace_id')::uuid;
+DECLARE job uuid := gen_random_uuid();
+BEGIN
+  INSERT INTO worker_jobs(id, workspace_id, job_type, max_attempts)
+    VALUES (job, ws, 'test.cancel', 2);
+  PERFORM set_config('test.cancel_job_id', job::text, false);
+END $$;
+
+SET ROLE browser_council_worker;
+DO $$
+DECLARE job_id uuid := current_setting('test.cancel_job_id')::uuid;
+DECLARE worker_id uuid := gen_random_uuid();
+DECLARE claimed record;
+BEGIN
+  SELECT * INTO claimed FROM app.worker_claim_job(worker_id, 60);
+  IF claimed.id IS DISTINCT FROM job_id THEN
+    RAISE EXCEPTION 'cancellation job was not claimed';
+  END IF;
+  PERFORM set_config('test.cancel_worker_id', worker_id::text, false);
+END $$;
+RESET ROLE;
+
+UPDATE worker_jobs SET cancel_requested_at = now()
+WHERE id = current_setting('test.cancel_job_id')::uuid;
+
+SET ROLE browser_council_worker;
+DO $$
+DECLARE job_id uuid := current_setting('test.cancel_job_id')::uuid;
+DECLARE worker_id uuid := current_setting('test.cancel_worker_id')::uuid;
+BEGIN
+  IF app.worker_heartbeat_job(job_id, worker_id, 60) THEN
+    RAISE EXCEPTION 'heartbeat continued after cancellation request';
+  END IF;
+  IF app.worker_finish_job(job_id, worker_id, true, NULL, 30) <> 'cancelled' THEN
+    RAISE EXCEPTION 'worker did not acknowledge cancellation';
+  END IF;
+END $$;
+RESET ROLE;
