@@ -369,31 +369,36 @@ async def cancel_council_run(
     async with database.tenant_transaction(principal.user_id) as connection:
         row = await connection.fetchrow(
             """
-            SELECT r.id, r.workspace_id, r.status, j.id AS job_id,
-                   j.status AS job_status, j.cancel_requested_at
-            FROM council_runs r
-            LEFT JOIN worker_jobs j
-              ON j.run_id = r.id AND j.workspace_id = r.workspace_id
-            WHERE r.id = $1
-            FOR UPDATE OF r
+            SELECT id, workspace_id, status
+            FROM council_runs WHERE id = $1
+            FOR UPDATE
             """,
             run_id,
         )
         if row is None:
             raise HTTPException(status_code=404, detail="Council run not found")
-        if row["job_id"] is None:
+        job = await connection.fetchrow(
+            """
+            SELECT id, status, cancel_requested_at
+            FROM worker_jobs
+            WHERE run_id = $1 AND workspace_id = $2
+            FOR UPDATE
+            """,
+            run_id, row["workspace_id"],
+        )
+        if job is None:
             raise HTTPException(status_code=409, detail="Council run has no worker job")
 
         run_status = row["status"]
         cancellation_requested = False
         event_type = None
-        if row["job_status"] == "queued" and run_status == "queued":
+        if job["status"] == "queued" and run_status == "queued":
             await connection.execute(
                 """
                 UPDATE worker_jobs SET status = 'cancelled', updated_at = now()
                 WHERE id = $1 AND status = 'queued'
                 """,
-                row["job_id"],
+                job["id"],
             )
             await connection.execute(
                 """
@@ -405,7 +410,7 @@ async def cancel_council_run(
             run_status = "cancelled"
             event_type = "council_run.cancelled"
         elif row["job_status"] == "leased" and run_status == "running":
-            if row["cancel_requested_at"] is None:
+            if job["cancel_requested_at"] is None:
                 await connection.execute(
                     """
                     UPDATE worker_jobs SET cancel_requested_at = now(), updated_at = now()
