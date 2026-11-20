@@ -378,3 +378,6 @@ A feature or phase is complete only when:
 
 
 **Execution batch K1:** implemented tenant-checked workspace event replay (`after_sequence`, bounded page size) and an SSE stream that resumes from `Last-Event-ID`, replays persisted events in sequence order, emits durable sequence IDs and sends keep-alives. Added tests for cursor replay and invalid bounds/cursors. This is a workspace event stream, not yet token streaming from a model provider. The stream currently uses bounded database polling; a continuously running worker and end-to-end model streaming remain open.
+
+
+**Verification evidence:** commit `c5eb0f9ad5d41b39fe0aad7f0a85e708b0421a36` passed GitHub Actions run [44761231769](https://github.com/concreteballs/YJ64-Browser-Council/actions/runs/44761231769): contract tests, API tests (including SSE replay), Python compilation, PostgreSQL migrations/RLS/worker lifecycle smoke tests, PWA build, Compose validation, both Docker builds and API container smoke test all completed successfully. The run's post-job cleanup was still finishing at the time of this note; all substantive validation steps reported success.
