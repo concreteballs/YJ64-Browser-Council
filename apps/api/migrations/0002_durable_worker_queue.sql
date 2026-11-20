@@ -65,8 +65,16 @@ BEGIN
     RAISE EXCEPTION 'invalid worker claim parameters' USING ERRCODE = '22023';
   END IF;
 
+  -- A cancelled lease that expires is terminally cancelled; never requeue it.
+  UPDATE public.worker_jobs j
+  SET status = 'cancelled', lease_owner = NULL, lease_expires_at = NULL,
+      heartbeat_at = NULL, updated_at = now()
+  WHERE j.status = 'leased' AND j.cancel_requested_at IS NOT NULL
+    AND j.lease_expires_at <= now();
+
   UPDATE public.worker_jobs j
   SET status = 'failed', lease_owner = NULL, lease_expires_at = NULL,
+      heartbeat_at = NULL,
       last_error_code = 'lease_expired_max_attempts', updated_at = now()
   WHERE j.status = 'leased' AND j.lease_expires_at <= now()
     AND j.attempts >= j.max_attempts;
