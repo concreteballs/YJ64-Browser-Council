@@ -264,8 +264,19 @@ BEGIN
     RAISE EXCEPTION 'generic completion bypassed Council result finalization';
   END IF;
   IF app.worker_complete_council_run(
-    job_id, worker_id, 'qualified_consensus',
-    '{"summary":"smoke result","limitations":["test fixture"]}'::jsonb
+    job_id, worker_id, 'insufficient_evidence',
+    jsonb_build_object(
+      'run_id', current_setting('test.council_run_id'),
+      'status', 'completed',
+      'outcome', 'insufficient_evidence',
+      'summary', 'smoke result',
+      'participant_positions', '[]'::jsonb,
+      'dissent', '[]'::jsonb,
+      'claims', '[]'::jsonb,
+      'evidence_refs', '[]'::jsonb,
+      'assumptions', '[]'::jsonb,
+      'limitations', jsonb_build_array('test fixture')
+    )
   ) <> 'completed' THEN
     RAISE EXCEPTION 'Council run did not complete with a validated outcome';
   END IF;
@@ -279,7 +290,7 @@ BEGIN
   IF (SELECT status FROM council_runs WHERE id = run_id) <> 'completed' THEN
     RAISE EXCEPTION 'Council run status was not completed';
   END IF;
-  IF (SELECT outcome FROM council_runs WHERE id = run_id) <> 'qualified_consensus' THEN
+  IF (SELECT outcome FROM council_runs WHERE id = run_id) <> 'insufficient_evidence' THEN
     RAISE EXCEPTION 'Council run outcome was not persisted';
   END IF;
   IF (SELECT result->>'summary' FROM council_runs WHERE id = run_id) <> 'smoke result' THEN
