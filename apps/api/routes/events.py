@@ -16,6 +16,14 @@ from apps.api.routes.workspaces import get_database
 router = APIRouter(prefix="/api/v1/workspaces/{workspace_id}/events", tags=["workspace-events"])
 
 
+def _json_object(value):
+    if isinstance(value, str):
+        value = json.loads(value)
+    if not isinstance(value, dict):
+        raise ValueError("Persisted event JSON must be an object")
+    return value
+
+
 class WorkspaceEventRead(BaseModel):
     id: UUID
     sequence: int
@@ -67,7 +75,16 @@ async def replay_workspace_events(
 ):
     await _verify_workspace(database, principal.user_id, workspace_id)
     rows = await _fetch_events(database, principal.user_id, workspace_id, after_sequence, limit)
-    return [WorkspaceEventRead(**dict(row)) for row in rows]
+    return [
+        WorkspaceEventRead(
+            **{
+                **dict(row),
+                "resource": _json_object(row["resource"]),
+                "payload": _json_object(row["payload"]),
+            }
+        )
+        for row in rows
+    ]
 
 
 @router.get("/stream")
@@ -106,8 +123,8 @@ async def stream_workspace_events(
                     "workspace_id": str(workspace_id),
                     "sequence": event["sequence"],
                     "event_type": event["event_type"],
-                    "resource": event["resource"],
-                    "payload": event["payload"],
+                    "resource": _json_object(event["resource"]),
+                    "payload": _json_object(event["payload"]),
                     "occurred_at": event["occurred_at"].isoformat(),
                 }
                 yield (
