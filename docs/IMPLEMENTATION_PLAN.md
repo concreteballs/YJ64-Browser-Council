@@ -340,15 +340,16 @@ A feature or phase is complete only when:
 
 **Completed**
 - Phase A / Batch A: repository baseline, licensing/reuse policy and MVP boundary.
-- Batch B: internal API/event schema, Draft 2020-12 validation and external v1 compatibility snapshot. Contract tests pass.
+- Batch B: internal API/event schema, Draft 2020-12 validation and external v1 compatibility snapshot.
 - Responsive React/TypeScript PWA shell: Council and individual-chat modes, honest local-only draft preview, API status, install icons, offline navigation fallback, Nginx reverse proxy and Compose topology.
-- PostgreSQL core schema: workspaces/memberships, provider connection metadata, conversations/messages, councils/participants/runs, durable event counters/events and idempotency records.
-- Tenant isolation: workspace-scoped composite foreign keys, RLS policies, and a PostgreSQL CI smoke test proving a non-owner runtime role cannot read or write another principal's workspace.
-- API database layer: asyncpg pool lifecycle, readiness connectivity check, transaction-local principal context and safe pooled connection release.
-- Authentication boundary: provider-neutral OIDC/JWKS bearer verification, RS256-only validation, required issuer/audience/expiry/subject, fail-closed configuration, issuer-scoped deterministic internal principal IDs.
-- First protected API routes: list and create workspaces. Creation atomically creates the owner membership and event counter.
-- Full CI passed on `f800f5626d2d6949e768cbe8a1a6ee1eb4f8ca78`: contract/API/auth/workspace tests, Python compilation, PostgreSQL migration + RLS test, PWA build, Compose validation, API/web container builds and API container smoke test.
+- PostgreSQL schema: workspaces/memberships, provider metadata, conversations/messages, per-conversation sequence counters, councils/participants/runs, durable workspace event sequence/events and idempotency records.
+- Tenant isolation: workspace-scoped composite foreign keys, RLS policies and PostgreSQL CI proof that a non-owner runtime role cannot read or write another principal's workspace.
+- API database layer: asyncpg pool lifecycle, readiness check, transaction-local principal context and safe pooled connection release.
+- Authentication: provider-neutral OIDC/JWKS bearer verification, RS256-only validation, required issuer/audience/expiry/subject, fail-closed configuration and issuer-scoped internal principal IDs.
+- Protected routes: workspace list/create; provider connection metadata list/create; conversation list/create; ordered message history and idempotent user-message creation.
+- Workspace, conversation and message writes persist durable events in the same transaction. Message retries are protected against concurrent duplicate submissions and mismatched payload reuse.
+- Full CI passed on `14d54c33f4b32e0d1884fa5c8ad1abd68767c083`: contract/API/auth/workspace/conversation tests, Python compilation, PostgreSQL migration + RLS test, PWA build, Compose validation, API/web container builds and API container smoke test.
 
-**Known limitations:** OIDC provider is not configured; no credentials or live sign-in. Database URL and production migration orchestration are not configured in Compose. No workspace membership management, conversation/message endpoints, durable worker, provider adapters, actual model responses, streaming, attachments, evidence search or Browser Agent. The composer remains a local preview. API readiness remains 503 until the worker is implemented.
+**Known limitations:** OIDC provider is not configured; no live sign-in. Database URL and production migration orchestration are not configured in Compose. Provider connections are metadata-only and remain unconfigured; no secret-manager or model adapter. No assistant response generation, durable worker, SSE/event replay, cancellation, attachments, evidence search or Browser Agent. The composer remains a local preview. API readiness remains 503 until the worker is implemented.
 
-**Next action:** extend the same verified-principal + tenant-transaction pattern to conversation and message persistence, including idempotency and ordered message history. Only after that connect provider adapters and real streaming; do not display fabricated model answers.
+**Next action:** implement the durable worker/run lifecycle and event replay/SSE contracts, then connect a first real API provider adapter. Keep all provider calls asynchronous, cancellable and idempotent where safe; do not claim success when provider delivery is uncertain.
