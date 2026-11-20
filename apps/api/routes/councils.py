@@ -247,6 +247,24 @@ async def create_council_run(
         if council is None:
             raise HTTPException(status_code=404, detail="Council not found")
         workspace_id = council["workspace_id"]
+        prior = await connection.fetchrow(
+            """
+            SELECT request_hash, response_body FROM idempotency_records
+            WHERE workspace_id = $1 AND principal_id = $2
+              AND operation = 'council.run.create' AND idempotency_key = $3
+            """,
+            workspace_id, principal.user_id, idempotency_key,
+        )
+        if prior is not None:
+            if prior["request_hash"].strip() != request_hash:
+                raise HTTPException(status_code=409, detail="Idempotency key reused with a different request")
+            prior_body = prior["response_body"]
+            if prior_body is None:
+                raise HTTPException(status_code=409, detail="Matching request is still being finalized")
+            if isinstance(prior_body, str):
+                prior_body = json.loads(prior_body)
+            return RunRead(**prior_body)
+
         participants = await connection.fetchrow(
             """
             SELECT count(*) FILTER (WHERE p.enabled) AS total,
