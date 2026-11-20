@@ -102,6 +102,9 @@
         },
         "message_id": {
           "$ref": "#/$defs/id"
+        },
+        "job_id": {
+          "$ref": "#/$defs/id"
         }
       }
     },
@@ -300,6 +303,28 @@
             "null"
           ],
           "maxLength": 2000
+        },
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "workspace_id": {
+          "$ref": "#/$defs/id"
+        },
+        "council_id": {
+          "$ref": "#/$defs/id"
+        },
+        "job_id": {
+          "$ref": "#/$defs/id"
+        },
+        "result": {
+          "oneOf": [
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "allOf": [
