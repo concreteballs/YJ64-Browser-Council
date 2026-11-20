@@ -36,6 +36,8 @@ jobs:
         run: python -m unittest discover -s tests/api -v
       - name: Compile Python sources
         run: python -m compileall -q apps tests
+      - name: Apply PostgreSQL migration and verify tenant isolation
+        run: bash tests/db/verify_migration.sh
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
