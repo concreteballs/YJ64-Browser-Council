@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import AsyncMock, patch
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from uuid import UUID
@@ -7,6 +8,7 @@ from fastapi.testclient import TestClient
 
 from apps.api.auth import Principal, get_current_principal
 from apps.api.main import app
+from apps.api.routes.events import stream_workspace_events
 from apps.api.routes.workspaces import get_database
 
 
@@ -79,6 +81,33 @@ class WorkspaceEventTests(unittest.TestCase):
             f"/api/v1/workspaces/{WORKSPACE_ID}/events?limit=501"
         )
         self.assertEqual(response.status_code, 422)
+
+
+
+class FakeStreamRequest:
+    def __init__(self):
+        self.calls = 0
+
+    async def is_disconnected(self):
+        self.calls += 1
+        return self.calls >= 3
+
+
+class WorkspaceEventStreamTests(unittest.IsolatedAsyncioTestCase):
+    async def test_sse_replays_durable_event_with_sequence_id(self):
+        database = FakeDatabase()
+        principal = Principal(PRINCIPAL_ID, "https://issuer.example", "user-123")
+        request = FakeStreamRequest()
+        with patch("apps.api.routes.events.asyncio.sleep", new=AsyncMock()):
+            response = await stream_workspace_events(
+                WORKSPACE_ID, request, principal, database, "2"
+            )
+            chunks = [chunk async for chunk in response.body_iterator]
+        body = b"".join(chunks).decode("utf-8")
+        self.assertIn("id: 3", body)
+        self.assertIn("event: message.created", body)
+        self.assertIn('"sequence":3', body)
+        self.assertEqual(response.media_type, "text/event-stream")
 
 
 if __name__ == "__main__":
