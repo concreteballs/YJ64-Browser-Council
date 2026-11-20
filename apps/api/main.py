@@ -5,6 +5,11 @@ from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
 from apps.api.database import Database
+from apps.api.routes.conversations import (
+    conversation_router,
+    message_router,
+    provider_router,
+)
 from apps.api.routes.workspaces import router as workspaces_router
 
 
@@ -62,3 +67,6 @@ async def ready():
     )
 
 app.include_router(workspaces_router)
+app.include_router(provider_router)
+app.include_router(conversation_router)
+app.include_router(message_router)
