@@ -419,14 +419,14 @@ async def cancel_council_run(
             )
             run_status = "cancelled"
             event_type = "council_run.cancelled"
-        elif row["job_status"] == "leased" and run_status == "running":
+        elif job["status"] == "leased" and run_status == "running":
             if job["cancel_requested_at"] is None:
                 await connection.execute(
                     """
                     UPDATE worker_jobs SET cancel_requested_at = now(), updated_at = now()
                     WHERE id = $1 AND status = 'leased' AND cancel_requested_at IS NULL
                     """,
-                    row["job_id"],
+                    job["id"],
                 )
                 event_type = "council_run.cancel_requested"
             cancellation_requested = True
