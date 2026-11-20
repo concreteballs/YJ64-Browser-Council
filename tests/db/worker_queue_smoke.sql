@@ -7,6 +7,8 @@ BEGIN
     (ws, 'worker queue smoke', gen_random_uuid());
   INSERT INTO workspace_members(workspace_id, user_id, role)
     SELECT ws, created_by, 'owner' FROM workspaces WHERE id = ws;
+  INSERT INTO workspace_event_counters(workspace_id, last_sequence)
+    VALUES (ws, 0);
   INSERT INTO worker_jobs(id, workspace_id, job_type, payload, max_attempts)
     VALUES (job, ws, 'test.noop', '{"resource":"smoke"}'::jsonb, 2);
   PERFORM set_config('test.worker_workspace_id', ws::text, false);
