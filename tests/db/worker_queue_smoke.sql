@@ -98,6 +98,8 @@ END $$;
 RESET ROLE;
 
 -- Expired leases are reclaimed by another worker and attempts are incremented.
+UPDATE worker_jobs SET available_at = now() - interval '1 second'
+WHERE id = current_setting('test.expiry_job_id')::uuid;
 SET ROLE browser_council_worker;
 DO $$
 DECLARE job_id uuid := current_setting('test.expiry_job_id')::uuid;
