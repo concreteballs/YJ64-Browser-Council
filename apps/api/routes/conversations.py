@@ -15,6 +15,7 @@ from apps.api.routes.workspaces import get_database
 provider_router = APIRouter(prefix="/api/v1/workspaces/{workspace_id}/provider-connections", tags=["provider-connections"])
 conversation_router = APIRouter(prefix="/api/v1/workspaces/{workspace_id}/conversations", tags=["conversations"])
 message_router = APIRouter(prefix="/api/v1/conversations/{conversation_id}/messages", tags=["messages"])
+job_router = APIRouter(prefix="/api/v1/jobs", tags=["worker-jobs"])
 
 
 class ProviderConnectionCreate(BaseModel):
@@ -62,6 +63,106 @@ class MessageRead(BaseModel):
     status: str
     sequence: int
     created_at: datetime
+
+
+class JobCancellationRead(BaseModel):
+    id: UUID
+    status: str
+    cancellation_requested: bool
+
+
+@job_router.post("/{job_id}/cancel", response_model=JobCancellationRead)
+async def cancel_job(
+    job_id: UUID,
+    principal: Annotated[Principal, Depends(get_current_principal)],
+    database: Annotated[Database, Depends(get_database)],
+):
+    async with database.tenant_transaction(principal.user_id) as connection:
+        job = await connection.fetchrow(
+            """
+            SELECT id, workspace_id, run_id, status, cancel_requested_at
+            FROM worker_jobs WHERE id = $1 FOR UPDATE
+            """,
+            job_id,
+        )
+        if job is None:
+            raise HTTPException(status_code=404, detail="Job not found")
+
+        event_type = None
+        cancellation_requested = False
+        status_value = job["status"]
+        if status_value == "queued":
+            updated = await connection.fetchrow(
+                """
+                UPDATE worker_jobs
+                SET status = 'cancelled', updated_at = now()
+                WHERE id = $1 AND workspace_id = $2 AND status = 'queued'
+                RETURNING id
+                """,
+                job_id,
+                job["workspace_id"],
+            )
+            if updated is None:
+                raise HTTPException(status_code=403, detail="Job cannot be cancelled")
+            status_value = "cancelled"
+            event_type = "worker_job.cancelled"
+            if job["run_id"] is not None:
+                await connection.execute(
+                    """
+                    UPDATE council_runs SET status = 'cancelled', updated_at = now()
+                    WHERE id = $1 AND workspace_id = $2 AND status = 'queued'
+                    """,
+                    job["run_id"],
+                    job["workspace_id"],
+                )
+        elif status_value == "leased":
+            updated = await connection.fetchrow(
+                """
+                UPDATE worker_jobs
+                SET cancel_requested_at = COALESCE(cancel_requested_at, now()),
+                    updated_at = now()
+                WHERE id = $1 AND workspace_id = $2 AND status = 'leased'
+                RETURNING id
+                """,
+                job_id,
+                job["workspace_id"],
+            )
+            if updated is None:
+                raise HTTPException(status_code=403, detail="Job cannot be cancelled")
+            cancellation_requested = True
+            event_type = "worker_job.cancel_requested"
+        else:
+            cancellation_requested = status_value == "cancelled"
+
+        if event_type is not None:
+            event_counter = await connection.fetchrow(
+                """
+                UPDATE workspace_event_counters
+                SET last_sequence = last_sequence + 1
+                WHERE workspace_id = $1
+                RETURNING last_sequence
+                """,
+                job["workspace_id"],
+            )
+            if event_counter is None:
+                raise HTTPException(status_code=409, detail="Workspace event counter is missing")
+            await connection.execute(
+                """
+                INSERT INTO workspace_events (workspace_id, sequence, event_type, resource, payload)
+                VALUES ($1, $2, $3, $4::jsonb, $5::jsonb)
+                """,
+                job["workspace_id"],
+                event_counter["last_sequence"],
+                event_type,
+                json.dumps({"workspace_id": str(job["workspace_id"]), "job_id": str(job_id)}),
+                json.dumps({"status": status_value}),
+            )
+
+    return JobCancellationRead(
+        id=job_id,
+        status=status_value,
+        cancellation_requested=cancellation_requested,
+    )
 
 
 @provider_router.get("", response_model=list[ProviderConnectionRead])
