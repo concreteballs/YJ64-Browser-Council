@@ -165,6 +165,7 @@ AS $$
 DECLARE j public.worker_jobs%ROWTYPE;
 DECLARE final_status varchar;
 DECLARE event_sequence bigint;
+DECLARE changed integer;
 BEGIN
   IF p_retry_delay_seconds < 1 OR p_retry_delay_seconds > 86400 THEN
     RAISE EXCEPTION 'invalid retry delay' USING ERRCODE = '22023';
@@ -292,14 +293,15 @@ BEGIN
     OR p_result->>'run_id' <> j.run_id::text
     OR p_result->>'status' <> 'completed'
     OR p_result->>'outcome' <> p_outcome
-    OR length(trim(p_result->>'summary')) = 0
-    OR length(p_result->>'summary') > 50000
-    OR jsonb_typeof(p_result->'participant_positions') <> 'array'
-    OR jsonb_typeof(p_result->'dissent') <> 'array'
-    OR jsonb_typeof(p_result->'claims') <> 'array'
-    OR jsonb_typeof(p_result->'evidence_refs') <> 'array'
-    OR jsonb_typeof(p_result->'assumptions') <> 'array'
-    OR jsonb_typeof(p_result->'limitations') <> 'array'
+    OR COALESCE(jsonb_typeof(p_result->'summary'), '') <> 'string'
+    OR COALESCE(length(trim(p_result->>'summary')), 0) = 0
+    OR COALESCE(length(p_result->>'summary'), 50001) > 50000
+    OR COALESCE(jsonb_typeof(p_result->'participant_positions'), '') <> 'array'
+    OR COALESCE(jsonb_typeof(p_result->'dissent'), '') <> 'array'
+    OR COALESCE(jsonb_typeof(p_result->'claims'), '') <> 'array'
+    OR COALESCE(jsonb_typeof(p_result->'evidence_refs'), '') <> 'array'
+    OR COALESCE(jsonb_typeof(p_result->'assumptions'), '') <> 'array'
+    OR COALESCE(jsonb_typeof(p_result->'limitations'), '') <> 'array'
   THEN
     RAISE EXCEPTION 'Council result does not satisfy the minimum result contract'
       USING ERRCODE = '22023';
