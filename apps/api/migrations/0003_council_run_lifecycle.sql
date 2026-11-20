@@ -285,6 +285,33 @@ BEGIN
     RETURN 'cancel_requested';
   END IF;
 
+  IF NOT (p_result ?& ARRAY[
+      'run_id','status','outcome','summary','participant_positions','dissent',
+      'claims','evidence_refs','assumptions','limitations'
+    ])
+    OR p_result->>'run_id' <> j.run_id::text
+    OR p_result->>'status' <> 'completed'
+    OR p_result->>'outcome' <> p_outcome
+    OR length(trim(p_result->>'summary')) = 0
+    OR length(p_result->>'summary') > 50000
+    OR jsonb_typeof(p_result->'participant_positions') <> 'array'
+    OR jsonb_typeof(p_result->'dissent') <> 'array'
+    OR jsonb_typeof(p_result->'claims') <> 'array'
+    OR jsonb_typeof(p_result->'evidence_refs') <> 'array'
+    OR jsonb_typeof(p_result->'assumptions') <> 'array'
+    OR jsonb_typeof(p_result->'limitations') <> 'array'
+  THEN
+    RAISE EXCEPTION 'Council result does not satisfy the minimum result contract'
+      USING ERRCODE = '22023';
+  END IF;
+
+  IF p_outcome IN ('consensus','qualified_consensus')
+     AND (jsonb_array_length(p_result->'participant_positions') = 0
+          OR jsonb_array_length(p_result->'claims') = 0) THEN
+    RAISE EXCEPTION 'consensus requires participant positions and explicit claims'
+      USING ERRCODE = '22023';
+  END IF;
+
   UPDATE public.council_runs
   SET status = 'completed', outcome = p_outcome, result = p_result, updated_at = now()
   WHERE id = j.run_id AND workspace_id = j.workspace_id AND status = 'running';
