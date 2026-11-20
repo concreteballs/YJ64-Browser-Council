@@ -116,21 +116,22 @@ async def cancel_job(
                     job["workspace_id"],
                 )
         elif status_value == "leased":
-            updated = await connection.fetchrow(
-                """
-                UPDATE worker_jobs
-                SET cancel_requested_at = COALESCE(cancel_requested_at, now()),
-                    updated_at = now()
-                WHERE id = $1 AND workspace_id = $2 AND status = 'leased'
-                RETURNING id
-                """,
-                job_id,
-                job["workspace_id"],
-            )
-            if updated is None:
-                raise HTTPException(status_code=403, detail="Job cannot be cancelled")
+            if job["cancel_requested_at"] is None:
+                updated = await connection.fetchrow(
+                    """
+                    UPDATE worker_jobs
+                    SET cancel_requested_at = now(), updated_at = now()
+                    WHERE id = $1 AND workspace_id = $2 AND status = 'leased'
+                      AND cancel_requested_at IS NULL
+                    RETURNING id
+                    """,
+                    job_id,
+                    job["workspace_id"],
+                )
+                if updated is None:
+                    raise HTTPException(status_code=403, detail="Job cannot be cancelled")
+                event_type = "worker_job.cancel_requested"
             cancellation_requested = True
-            event_type = "worker_job.cancel_requested"
         else:
             cancellation_requested = status_value == "cancelled"
 
