@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from typing import Annotated
 from uuid import UUID
@@ -87,8 +88,17 @@ async def create_workspace(
         await connection.execute(
             """
             INSERT INTO workspace_event_counters (workspace_id, last_sequence)
-            VALUES ($1, 0)
+            VALUES ($1, 1)
             """,
             row["id"],
+        )
+        await connection.execute(
+            """
+            INSERT INTO workspace_events (workspace_id, sequence, event_type, resource, payload)
+            VALUES ($1, 1, 'workspace.created', $2::jsonb, $3::jsonb)
+            """,
+            row["id"],
+            json.dumps({"workspace_id": str(row["id"])}),
+            json.dumps({"name": row["name"]}),
         )
     return WorkspaceRead(**dict(row))
