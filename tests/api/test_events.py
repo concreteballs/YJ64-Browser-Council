@@ -68,11 +68,13 @@ class WorkspaceEventTests(unittest.TestCase):
         app.dependency_overrides.clear()
 
     def test_event_replay_uses_sequence_cursor(self):
+        self.database.connection.json_as_text = True
         response = self.client.get(
             f"/api/v1/workspaces/{WORKSPACE_ID}/events?after_sequence=2&limit=20"
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()[0]["sequence"], 3)
+        self.assertEqual(response.json()[0]["resource"]["workspace_id"], str(WORKSPACE_ID))
         query, args = self.database.connection.calls[-1]
         self.assertIn("sequence > $2", query)
         self.assertEqual(args, (WORKSPACE_ID, 2, 20))
