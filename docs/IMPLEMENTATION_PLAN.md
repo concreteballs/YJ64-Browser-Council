@@ -372,3 +372,6 @@ A feature or phase is complete only when:
 **Acceptance gate:** CI must pass the new migration and smoke tests; additional recovery/cancellation/concurrency tests must pass before marking the queue foundation complete. API readiness remains 503 until an actual worker service is operational and verified.
 
 **Next action:** finish run/event lifecycle and cancellation semantics, then add worker polling/deployment and event replay/SSE.
+
+
+**Execution batch J2:** added tenant-scoped `POST /api/v1/jobs/{job_id}/cancel`. Queued work transitions immediately to `cancelled`; leased work receives a durable cancellation request and stays leased until worker acknowledgement. Repeated requests are idempotent; terminal jobs are unchanged. Workspace events are written atomically with API cancellation transitions. Added route tests and database smoke coverage proving the worker stops heartbeating and finishes as `cancelled`. CI validation is pending for this latest batch. The running worker process, run lifecycle integration and SSE replay remain open.
