@@ -11,6 +11,7 @@ from apps.api.routes.conversations import (
     provider_router,
     job_router,
 )
+from apps.api.routes.events import router as events_router
 from apps.api.routes.workspaces import router as workspaces_router
 
 
@@ -72,3 +73,4 @@ app.include_router(provider_router)
 app.include_router(conversation_router)
 app.include_router(message_router)
 app.include_router(job_router)
+app.include_router(events_router)
