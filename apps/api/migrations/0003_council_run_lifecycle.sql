@@ -312,6 +312,13 @@ BEGIN
       USING ERRCODE = '22023';
   END IF;
 
+  IF p_outcome = 'unresolved_disagreement'
+     AND (jsonb_array_length(p_result->'participant_positions') < 2
+          OR jsonb_array_length(p_result->'claims') = 0) THEN
+    RAISE EXCEPTION 'unresolved disagreement requires multiple positions and explicit claims'
+      USING ERRCODE = '22023';
+  END IF;
+
   UPDATE public.council_runs
   SET status = 'completed', outcome = p_outcome, result = p_result, updated_at = now()
   WHERE id = j.run_id AND workspace_id = j.workspace_id AND status = 'running';
