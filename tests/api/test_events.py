@@ -20,6 +20,7 @@ EVENT_ID = UUID("cccccccc-cccc-4ccc-8ccc-cccccccccccc")
 class FakeConnection:
     def __init__(self):
         self.calls = []
+        self.fetch_calls = 0
 
     async def fetchrow(self, query, *args):
         self.calls.append((query, args))
@@ -29,6 +30,9 @@ class FakeConnection:
 
     async def fetch(self, query, *args):
         self.calls.append((query, args))
+        self.fetch_calls += 1
+        if self.fetch_calls > 1:
+            return []
         return [{
             "id": EVENT_ID,
             "sequence": 3,
