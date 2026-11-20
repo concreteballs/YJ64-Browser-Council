@@ -28,7 +28,7 @@ docker exec "$container" psql -v ON_ERROR_STOP=1 -U postgres -d postgres \
   -c "CREATE ROLE browser_council_runtime NOLOGIN"
 docker exec -i "$container" psql -v ON_ERROR_STOP=1 -U postgres -d postgres \
   < apps/api/migrations/0001_workspace_core.sql
-docker exec "$container" psql -v ON_ERROR_STOP=1 -U postgres -d postgres <<'SQL'
+docker exec -i "$container" psql -v ON_ERROR_STOP=1 -U postgres -d postgres <<'SQL'
 GRANT USAGE ON SCHEMA public, app TO browser_council_runtime;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO browser_council_runtime;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO browser_council_runtime;
