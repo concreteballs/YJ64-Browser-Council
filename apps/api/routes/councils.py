@@ -249,7 +249,7 @@ async def create_council_run(
         workspace_id = council["workspace_id"]
         participants = await connection.fetchrow(
             """
-            SELECT count(*) AS total,
+            SELECT count(*) FILTER (WHERE p.enabled) AS total,
                    count(*) FILTER (WHERE p.enabled AND pc.status = 'active') AS ready
             FROM council_participants p
             JOIN provider_connections pc
@@ -258,10 +258,10 @@ async def create_council_run(
             """,
             council_id, workspace_id,
         )
-        if participants["total"] == 0 or participants["ready"] == 0:
+        if participants["total"] == 0 or participants["ready"] != participants["total"]:
             raise HTTPException(
                 status_code=409,
-                detail="Council needs at least one enabled participant with an active provider connection",
+                detail="Every enabled Council participant must have an active provider connection",
             )
 
         inserted = await connection.fetchrow(
