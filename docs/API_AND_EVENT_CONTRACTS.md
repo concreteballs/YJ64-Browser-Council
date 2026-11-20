@@ -3,7 +3,7 @@
 **Contract:** `browser-council.internal.v1`  
 **Schema:** [browser-council-v1.schema.json](../schemas/browser-council-v1.schema.json)  
 **External compatibility target:** `yj64.council-api.v1` (unchanged)  
-**Status:** Batch B contract baseline; implementation and generated OpenAPI are not yet claimed.
+**Status:** Internal API foundation implemented in part; Council profiles, participant rosters and idempotent run enqueue are now available. Full execution and generated OpenAPI remain incomplete.
 
 ## 1. Contract separation
 
@@ -62,7 +62,7 @@ Rules:
 | POST | `/api/v1/conversations/{conversation_id}/messages` | Submit message (idempotent) |
 | POST | `/api/v1/conversations/{conversation_id}/turns/{turn_id}/cancel` | Cancel active generation |
 | POST | `/api/v1/jobs/{job_id}/cancel` | Cancel queued work or request cancellation of a leased job |
-| POST | `/api/v1/workspaces/{workspace_id}/councils` | Create Council profile |
+| POST | `/api/v1/workspaces/{workspace_id}/councils` | Create Council profile |\n| GET | `/api/v1/workspaces/{workspace_id}/councils` | List workspace Council profiles |\n| POST | `/api/v1/councils/{council_id}/participants` | Add a provider-backed participant |\n| GET | `/api/v1/councils/{council_id}/participants` | List Council participants |
 | POST | `/api/v1/councils/{council_id}/runs` | Start Council run (idempotent) |
 | GET | `/api/v1/runs/{run_id}` | Read run status/result |
 | GET | `/api/v1/runs/{run_id}/events` | Replay/stream events (SSE) |
@@ -193,3 +193,4 @@ before live YJ64 integration.
   compatibility snapshot.
 - The GitHub Actions result is the execution evidence; a committed workflow
   definition alone is not a passing test.
+\n\n## 12. Implemented Council profile and run-enqueue API\n\nThe API now implements Council profile create/list, participant add/list, idempotent run creation and run status lookup. A run is accepted only when its Council has at least one enabled participant whose provider connection is marked active. The run row, durable `council.run` job, workspace event and idempotency response are committed in one tenant transaction. The queue payload contains only the `run_id`; the prompt remains in the protected `council_runs` row and is not copied into queue metadata.\n\nThis is an enqueue and status foundation, not a completed Council execution engine. There is not yet a continuously running worker, provider adapter, participant execution record, final result persistence or analytical outcome. A queued run must not be described as having started or completed.\n
