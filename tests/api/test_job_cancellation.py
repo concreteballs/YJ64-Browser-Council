@@ -35,7 +35,7 @@ class FakeConnection:
         if "UPDATE worker_jobs" in query:
             if "status = 'cancelled'" in query:
                 self.status = "cancelled"
-            elif "cancel_requested_at = COALESCE" in query:
+            elif "cancel_requested_at = now()" in query:
                 self.cancel_requested = datetime.now(timezone.utc)
             return {"id": JOB_ID}
         if "UPDATE workspace_event_counters" in query:
